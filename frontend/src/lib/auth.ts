@@ -3,7 +3,7 @@ import api from './api';
 
 export interface User {
   id: string;
-  role: 'admin' | 'teacher';
+  role: 'admin' | 'teacher' | 'doctor';
   email: string;
   first_name: string;
   last_name: string;
@@ -41,6 +41,28 @@ export const authService = {
 
   async loginTeacher(email: string, password: string): Promise<LoginResponse> {
     const response = await api.post('/auth/teacher/login', { email, password });
+    const data = response.data;
+
+    const isProduction = window.location.protocol === 'https:';
+    const cookieOptions = {
+      expires: 1/48,
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+    
+    Cookies.set('access_token', data.access_token, cookieOptions);
+    Cookies.set('refresh_token', data.refresh_token, { ...cookieOptions, expires: 30 });
+    Cookies.set('user', JSON.stringify(data.user), { ...cookieOptions, expires: 30 });
+
+    // Wait a bit to ensure cookies are set before redirect
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    return data;
+  },
+
+  async loginDoctor(email: string, password: string): Promise<LoginResponse> {
+    const response = await api.post('/auth/doctor/login', { email, password });
     const data = response.data;
 
     const isProduction = window.location.protocol === 'https:';

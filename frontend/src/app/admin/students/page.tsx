@@ -283,15 +283,20 @@ export default function AdminStudentsPage() {
                                   <span className="text-xs font-semibold text-gray-800 min-w-[80px]">
                                     {course.course_code}
                                   </span>
+                                  {course.medical_report_count > 0 && (
+                                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                      {course.medical_report_count} raporlu
+                                    </span>
+                                  )}
                                   {course.absent_count > 0 ? (
                                     <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                                       {course.absent_count} absent
                                     </span>
-                                  ) : (
+                                  ) : course.medical_report_count === 0 ? (
                                     <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                       ✓ Perfect
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 min-w-[80px]">

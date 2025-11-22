@@ -162,6 +162,26 @@ export default function AdminDashboardPage() {
               </p>
             </div>
           </Link>
+
+          {/* Doctors Card */}
+          <Link href="/admin/doctors">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer bg-green-50">
+              <h3 className="text-lg font-semibold text-green-900 mb-2">👨‍⚕️ Doctors</h3>
+              <p className="text-sm text-green-700">
+                Manage doctor accounts for medical reports
+              </p>
+            </div>
+          </Link>
+
+          {/* Health System Card */}
+          <Link href="/admin/health-system">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer bg-yellow-50">
+              <h3 className="text-lg font-semibold text-yellow-900 mb-2">🏥 Health System</h3>
+              <p className="text-sm text-yellow-700">
+                Import students for health system
+              </p>
+            </div>
+          </Link>
         </div>
       </main>
     </div>

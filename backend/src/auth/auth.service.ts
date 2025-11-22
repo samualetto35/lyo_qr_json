@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { AdminLoginDto, TeacherLoginDto } from './dto/auth.dto';
+import { AdminLoginDto, TeacherLoginDto, DoctorLoginDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -77,6 +77,40 @@ export class AuthService {
         email: teacher.email,
         first_name: teacher.firstName,
         last_name: teacher.lastName,
+      },
+    };
+  }
+
+  async doctorLogin(loginDto: DoctorLoginDto) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { email: loginDto.email },
+    });
+
+    if (!doctor || !doctor.isActive) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(loginDto.password, doctor.passwordHash);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const tokens = await this.generateTokens({
+      sub: doctor.id,
+      role: 'doctor',
+      email: doctor.email,
+    });
+
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      user: {
+        id: doctor.id,
+        role: 'doctor',
+        email: doctor.email,
+        first_name: doctor.firstName,
+        last_name: doctor.lastName,
       },
     };
   }

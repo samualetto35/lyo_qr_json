@@ -18,6 +18,15 @@ export class TeacherLoginDto {
   password: string;
 }
 
+export class DoctorLoginDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
+}
+
 export class RefreshTokenDto {
   @IsString()
   refresh_token: string;

@@ -49,6 +49,22 @@ model Teacher {
   @@map("teachers")
 }
 
+model Doctor {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash   String   @map("password_hash")
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  medicalReports MedicalReport[]
+
+  @@map("doctors")
+}
+
 // ============================================
 // COURSES & STUDENTS
 // ============================================
@@ -91,6 +107,23 @@ model Student {
   fraudSignals      FraudSignal[]
 
   @@map("students")
+}
+
+model HealthSystemStudent {
+  id        String   @id @default(uuid())
+  studentId String   @unique @map("student_id") // External student ID
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  gender    String?
+  program   String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  medicalReports MedicalReport[]
+
+  @@map("health_system_students")
 }
 
 model CourseEnrollment {
@@ -273,4 +306,24 @@ model AuditLog {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")
+}
+
+// ============================================
+// MEDICAL REPORTS
+// ============================================
+
+model MedicalReport {
+  id        String   @id @default(uuid())
+  studentId String   @map("student_id_fk") // FK to HealthSystemStudent
+  doctorId  String   @map("doctor_id")
+  reportDate DateTime @map("report_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  student HealthSystemStudent @relation(fields: [studentId], references: [id])
+  doctor  Doctor              @relation(fields: [doctorId], references: [id])
+
+  @@unique([studentId, reportDate])
+  @@map("medical_reports")
 }

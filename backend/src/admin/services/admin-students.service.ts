@@ -207,20 +207,90 @@ export class AdminStudentsService {
       throw new NotFoundException('Student not found');
     }
 
+    // Get all closed sessions for courses this student is enrolled in
+    const allClosedSessions = await this.prisma.attendanceSession.findMany({
+      where: {
+        courseId: { in: student.enrollments.map(e => e.course.id) },
+        isOpen: false,
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    });
+
+    // Get medical reports for this student (by studentId)
+    const healthSystemStudent = await this.prisma.healthSystemStudent.findUnique({
+      where: { studentId: student.studentId },
+      include: {
+        medicalReports: true,
+      },
+    });
+
+    const medicalReportDates = new Set(
+      healthSystemStudent?.medicalReports.map(r => 
+        r.reportDate.toISOString().split('T')[0]
+      ) || []
+    );
+
     // Group attendance by course
     const courseStats = new Map();
 
     for (const enrollment of student.enrollments) {
       const courseId = enrollment.course.id;
-      const totalSessions = await this.prisma.attendanceSession.count({
-        where: {
-          courseId,
-          isOpen: false,
-        },
-      });
+      const courseSessions = allClosedSessions.filter(s => s.courseId === courseId);
+      const totalSessions = courseSessions.length;
 
       const studentSessions = student.attendanceRecords.filter(
         (r) => r.attendanceSession.course.code === enrollment.course.code,
+      );
+
+      // Calculate absent sessions (sessions where student has no record)
+      const presentSessionIds = new Set(studentSessions.map(r => r.attendanceSession.id));
+      const absentSessions = courseSessions.filter(s => !presentSessionIds.has(s.id));
+
+      // Check which absent sessions have medical reports
+      let absentCount = 0;
+      let medicalReportCount = 0;
+
+      for (const session of absentSessions) {
+        const sessionDateStr = session.sessionDate.toISOString().split('T')[0];
+        if (medicalReportDates.has(sessionDateStr)) {
+          medicalReportCount++;
+        } else {
+          absentCount++;
+        }
+      }
+
+      const attendanceRecords = studentSessions.map((r) => ({
+        session_id: r.attendanceSession.id,
+        session_name: r.attendanceSession.sessionName,
+        session_date: r.attendanceSession.sessionDate,
+        status: r.status,
+        submitted_at: r.submittedAt,
+      }));
+
+      // Add absent sessions with medical report info
+      for (const session of absentSessions) {
+        const sessionDateStr = session.sessionDate.toISOString().split('T')[0];
+        const hasMedicalReport = medicalReportDates.has(sessionDateStr);
+        attendanceRecords.push({
+          session_id: session.id,
+          session_name: session.sessionName,
+          session_date: session.sessionDate,
+          status: hasMedicalReport ? 'medical_report' : 'absent',
+          submitted_at: null,
+        });
+      }
+
+      // Sort by session date descending
+      attendanceRecords.sort((a, b) => 
+        new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
       );
 
       courseStats.set(courseId, {
@@ -229,14 +299,9 @@ export class AdminStudentsService {
         course_code: enrollment.course.code,
         total_sessions: totalSessions,
         present_count: studentSessions.length,
-        absent_count: Math.max(0, totalSessions - studentSessions.length),
-        attendance_records: studentSessions.map((r) => ({
-          session_id: r.attendanceSession.id,
-          session_name: r.attendanceSession.sessionName,
-          session_date: r.attendanceSession.sessionDate,
-          status: r.status,
-          submitted_at: r.submittedAt,
-        })),
+        absent_count: absentCount,
+        medical_report_count: medicalReportCount,
+        attendance_records: attendanceRecords,
       });
     }
 
