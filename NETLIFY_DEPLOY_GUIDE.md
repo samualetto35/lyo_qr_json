@@ -43,12 +43,9 @@ Backend'i restart etmeniz gerekebilir (Railway otomatik restart eder).
 
 4. **Environment Variables (Site settings → Environment variables):**
    ```
-   NEXT_PUBLIC_API_URL=https://YOUR_RAILWAY_BACKEND_URL/api/v1
+   NEXT_PUBLIC_API_URL=https://lyoqrjson-production.up.railway.app/api/v1
    ```
-   **Örnek:**
-   ```
-   NEXT_PUBLIC_API_URL=https://terrific-growth-production.up.railway.app/api/v1
-   ```
+   **Not:** Bu değeri ekleyin ve "All scopes" seçin (production, preview, branch deploys)
 
 5. **Site İsmi:**
    - Site settings → General → Site details
