@@ -1,11 +1,9 @@
 [build]
   base = "frontend"
   command = "npm install && npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NEXT_PUBLIC_API_URL = "https://lyoqrjson-production.up.railway.app/api/v1"
-
-# Next.js plugin is not needed when using standard Next.js build
-# The plugin is for advanced Next.js features, but standard build works fine
 
