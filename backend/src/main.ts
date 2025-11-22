@@ -154,12 +154,25 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api/v1');
 
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
-
-  console.log(`✅ [STARTUP] QR Attendance Backend is running on: http://localhost:${port}`);
-  console.log(`📚 [STARTUP] API documentation: http://localhost:${port}/api/v1`);
-  console.log(`🎉 [STARTUP] Startup process completed successfully!`);
+  // Get port from environment (Railway provides this automatically)
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+  
+  console.log(`🚀 [STARTUP] Attempting to start server on port: ${port}`);
+  console.log(`🔌 [STARTUP] PORT environment variable: ${process.env.PORT || 'not set, using default 3001'}`);
+  
+  try {
+    await app.listen(port, '0.0.0.0'); // Listen on all interfaces (required for Railway)
+    console.log(`✅ [STARTUP] QR Attendance Backend is running on port: ${port}`);
+    console.log(`📚 [STARTUP] API documentation: http://0.0.0.0:${port}/api/v1`);
+    console.log(`🎉 [STARTUP] Startup process completed successfully!`);
+  } catch (error: any) {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ [STARTUP] Port ${port} is already in use!`);
+      console.error(`💡 [STARTUP] Railway should provide PORT variable automatically.`);
+      console.error(`💡 [STARTUP] Check Railway Variables: PORT should be set.`);
+    }
+    throw error;
+  }
 }
 
 bootstrap().catch((error) => {
