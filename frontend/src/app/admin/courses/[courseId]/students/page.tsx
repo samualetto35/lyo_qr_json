@@ -33,8 +33,7 @@ export default function AdminCourseStudentsPage() {
       })
       return response.data
     },
-    enabled: !!user,
-    enabled: !!courseId,
+    enabled: !!user && !!courseId,
   })
 
   if (!mounted || !user) return null
