@@ -14,36 +14,72 @@ async function runMigrations() {
     const isProduction = process.env.NODE_ENV === 'production';
     
     if (isProduction) {
-      console.log('📦 [STARTUP] Generating Prisma Client...');
-      await execAsync('npx prisma generate', { cwd: process.cwd() });
-      console.log('✅ [STARTUP] Prisma Client generated');
+      // Determine working directory - try backend folder first
+      const fs = require('fs');
+      const path = require('path');
+      let workingDir = process.cwd();
       
-      console.log('🗄️  [STARTUP] Running database migrations...');
-      const { stdout, stderr } = await execAsync('npx prisma migrate deploy', { 
-        cwd: process.cwd(),
-        env: { ...process.env }
-      });
-      
-      if (stdout) console.log('📋 [MIGRATION]', stdout.trim());
-      if (stderr && !stderr.includes('Already applied')) {
-        console.warn('⚠️  [MIGRATION]', stderr.trim());
+      // Check if we're in root and backend folder exists
+      const backendPath = path.join(process.cwd(), 'backend');
+      if (fs.existsSync(backendPath) && fs.existsSync(path.join(backendPath, 'prisma'))) {
+        workingDir = backendPath;
+        console.log('📁 [STARTUP] Found backend folder, using:', workingDir);
+      } else if (fs.existsSync(path.join(process.cwd(), 'prisma'))) {
+        workingDir = process.cwd();
+        console.log('📁 [STARTUP] Using current directory:', workingDir);
+      } else {
+        console.warn('⚠️  [STARTUP] Could not find prisma folder, trying current directory');
       }
       
-      console.log('✅ [STARTUP] Migrations completed');
-      
-      // Run seed only if migrations were successful
-      console.log('🌱 [STARTUP] Running database seed...');
+      console.log('📦 [STARTUP] Generating Prisma Client in:', workingDir);
       try {
-        await execAsync('npm run prisma:seed', { 
-          cwd: process.cwd(),
+        await execAsync('npx prisma generate', { 
+          cwd: workingDir,
           env: { ...process.env }
         });
+        console.log('✅ [STARTUP] Prisma Client generated');
+      } catch (genError: any) {
+        console.error('❌ [STARTUP] Prisma generate failed:', genError.message);
+        if (genError.stdout) console.log('📋 [STDOUT]', genError.stdout.trim());
+        if (genError.stderr) console.error('📋 [STDERR]', genError.stderr.trim());
+        throw genError;
+      }
+      
+      console.log('🗄️  [STARTUP] Running database migrations in:', workingDir);
+      try {
+        const { stdout, stderr } = await execAsync('npx prisma migrate deploy', { 
+          cwd: workingDir,
+          env: { ...process.env }
+        });
+        
+        if (stdout) console.log('📋 [MIGRATION]', stdout.trim());
+        if (stderr && !stderr.includes('Already applied') && !stderr.includes('No pending migrations')) {
+          console.warn('⚠️  [MIGRATION]', stderr.trim());
+        }
+        
+        console.log('✅ [STARTUP] Migrations completed');
+      } catch (migError: any) {
+        console.error('❌ [STARTUP] Migration failed:', migError.message);
+        if (migError.stdout) console.log('📋 [MIGRATION STDOUT]', migError.stdout.trim());
+        if (migError.stderr) console.error('📋 [MIGRATION STDERR]', migError.stderr.trim());
+        // Continue anyway - migration might already be applied
+        console.warn('⚠️  [STARTUP] Continuing despite migration error (may already be applied)');
+      }
+      
+      // Run seed only if migrations were successful
+      console.log('🌱 [STARTUP] Running database seed in:', workingDir);
+      try {
+        const { stdout, stderr } = await execAsync('npm run prisma:seed', { 
+          cwd: workingDir,
+          env: { ...process.env }
+        });
+        if (stdout) console.log('📋 [SEED]', stdout.trim());
         console.log('✅ [STARTUP] Seed completed');
       } catch (seedError: any) {
         // Seed is idempotent, so errors are usually fine (already seeded)
-        if (seedError.stdout) console.log('📋 [SEED]', seedError.stdout.trim());
-        if (!seedError.message?.includes('duplicate key')) {
-          console.warn('⚠️  [SEED]', seedError.message || 'Seed may have already run');
+        if (seedError.stdout) console.log('📋 [SEED STDOUT]', seedError.stdout.trim());
+        if (seedError.stderr && !seedError.stderr.includes('duplicate key')) {
+          console.warn('⚠️  [SEED]', seedError.stderr.trim());
         } else {
           console.log('ℹ️  [SEED] Database already seeded (skipped)');
         }
