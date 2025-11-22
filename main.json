@@ -1,0 +1,1234 @@
+{
+    "prompt": "You are an expert full-stack architect, backend engineer, frontend engineer, security engineer, and UX designer in one person. Your job is to design and (if asked) implement a complete production-grade web application for a QR-based course attendance platform with two user types: admin and teacher. Use ONLY this JSON as the single source of truth. Do not introduce new concepts, fields, flows, or features that are not described here. Do not leave gaps or ambiguous areas. If something is not explicitly allowed here, you must not assume it. Follow all details about roles, flows, database, permissions, APIs, UI, and behavior exactly. In this enhanced version, you MUST also enforce strong anti-fraud rules for attendance (prevent buddy punching, link sharing abuse, and typos), robust CSV import merge logic, hard auto-close for sessions, and reasonable offline / retry behavior on the frontend.",
+    "meta": {
+      "project_name": "QR Attendance Platform",
+      "description": "A production-grade web platform with two roles (admin, teacher) to manage courses, teachers, student rosters, and QR-based attendance sessions. Admin controls system, manages teachers, courses, and student rosters via CSV/Excel import. Teachers manage their own courses and run QR attendance sessions where students scan a code and enter their Student ID. The platform includes device-based and geo-based anti-fraud measures, robust import logic, mandatory session auto-close, and offline-safe submission behavior.",
+      "tech_stack": {
+        "frontend": {
+          "framework": "Next.js (React, TypeScript)",
+          "routing": "Next.js App Router with file-based routing",
+          "styling": "Tailwind CSS",
+          "forms": "React Hook Form + Zod validation",
+          "state_management": "React Query (TanStack Query) for server state, minimal local state for UI",
+          "build_output": "Single web app with role-based views"
+        },
+        "backend": {
+          "language": "TypeScript",
+          "framework": "NestJS",
+          "api_style": "REST JSON API under /api/v1",
+          "security": "JWT-based auth with access and refresh tokens",
+          "background_jobs": "NestJS cron or scheduled tasks for auto-closing sessions and cleanup"
+        },
+        "database": {
+          "engine": "PostgreSQL",
+          "orm": "Prisma ORM",
+          "migrations": "Prisma migrations"
+        },
+        "deployment": {
+          "environments": [
+            "development",
+            "staging",
+            "production"
+          ],
+          "build_artifacts": [
+            "Backend (NestJS) service",
+            "Frontend (Next.js) static + server components",
+            "PostgreSQL instance"
+          ]
+        }
+      }
+    },
+    "domain": {
+      "roles": [
+        "admin",
+        "teacher"
+      ],
+      "high_level_rules": [
+        "There are exactly two authenticated application roles: admin and teacher.",
+        "Only admins can access the admin portal and /admin/* APIs.",
+        "Only teachers can access the teacher portal and /teacher/* APIs.",
+        "Students do NOT have accounts. They only interact via a public attendance page, where they enter their Student ID for a specific attendance session.",
+        "Courses can be created by both admins and teachers, but admins can manage all courses. Teachers can only manage their own courses.",
+        "Each course is owned by exactly one primary teacher (teacher_id).",
+        "A teacher may have 0 or more courses.",
+        "A student may be enrolled in 0 or more courses.",
+        "Attendance is done via sessions. Each session belongs to exactly one course, and is created by its teacher.",
+        "Each attendance session has its own unique QR token that cannot be shared across sessions.",
+        "Multiple teachers can run QR attendance sessions concurrently; sessions and tokens must never conflict or mix.",
+        "Attendance must be resistant to casual fraud: it must be hard for a student to mark attendance for another student or from outside campus, while still being usable in real classrooms."
+      ]
+    },
+    "users_and_roles": {
+      "admin": {
+        "description": "System owner / program admin who manages teachers, courses, and student rosters.",
+        "login": {
+          "method": "email + password",
+          "requirements": [
+            "Admin accounts are created manually in the database or via a secure admin-only bootstrap process.",
+            "Admin email must be unique.",
+            "Passwords are stored as strong salted hashes (bcrypt or Argon2).",
+            "Admin login endpoint is separate from teacher login endpoint."
+          ]
+        },
+        "capabilities": [
+          "Login to admin portal with email and password.",
+          "View admin dashboard overview.",
+          "Create, update, and deactivate teacher accounts.",
+          "Create, update, and deactivate courses.",
+          "Assign or reassign a teacher to a course.",
+          "Import student rosters for a specific course via CSV/Excel.",
+          "Preview imported student data before committing to the database.",
+          "Assign imported batch to a course and commit.",
+          "Define and adjust global system settings for attendance fraud prevention, including max session duration, per-device limits, per-IP limits, and geofence.",
+          "View, filter, and export attendance results for all courses and all teachers.",
+          "View and inspect suspicious attendance activity (e.g., multiple IDs from same device or outside geofence).",
+          "Manually adjust student rosters: add, edit, or remove students from a course.",
+          "Manually adjust attendance records: mark present/absent for any student in any session, marking them as manual.",
+          "Configure behavior of CSV imports (update existing vs. create new vs. deactivate missing)."
+        ]
+      },
+      "teacher": {
+        "description": "Instructor who manages their own courses and runs attendance sessions.",
+        "login": {
+          "method": "email + password",
+          "requirements": [
+            "Teacher accounts are created and managed only by admins.",
+            "Teacher email must be unique.",
+            "Passwords are stored as strong salted hashes.",
+            "Teachers cannot self-register."
+          ]
+        },
+        "capabilities": [
+          "Login to teacher portal with email and password.",
+          "View their own courses.",
+          "Create new courses that are automatically assigned to themselves as teacher.",
+          "View the student roster for their courses.",
+          "Optionally request admin to bulk-import students; teachers themselves do not run imports in this spec.",
+          "Create attendance sessions for their courses.",
+          "Optionally set the time duration for which an attendance session is open before it closes automatically, within min/max allowed limits.",
+          "View QR code for an active attendance session.",
+          "Close an attendance session manually before the scheduled end time.",
+          "View attendance history for their courses in a table spreadsheet-like format.",
+          "Filter attendance by date, session, and student ID or name.",
+          "Export attendance for their courses (CSV).",
+          "View flagged or suspicious attendance events related to their sessions for potential manual follow-up."
+        ]
+      }
+    },
+    "non_functional_requirements": {
+      "security": [
+        "All API endpoints must be served over HTTPS in production.",
+        "JWT access tokens must be signed with a secure secret or asymmetric keys.",
+        "Access tokens must have limited lifetime (e.g., 30 minutes).",
+        "Refresh tokens must be stored securely and may be revoked.",
+        "Role-based access control (RBAC) must be enforced server-side on each protected endpoint.",
+        "Admin and teacher portals must be protected via auth guards; public attendance endpoints must validate tokens and session states.",
+        "Password reset flows are admin-controlled and must be implemented separately if needed; they are not open for self-service by default.",
+        "Public attendance submission endpoint must implement: IP-based rate limiting, per-device submission limits, and optional geofence validation.",
+        "Each public submission stores device fingerprint, IP address, user agent, and approximate geolocation (if available) for fraud analysis.",
+        "If geofence is enabled, submissions outside the allowed radius must be rejected or at least flagged as suspicious, depending on configuration."
+      ],
+      "performance": [
+        "Expected scale: ~20–30 teachers, each with 1–4 courses, each course up to a few hundred students.",
+        "Single PostgreSQL instance and single backend instance are sufficient.",
+        "Public attendance submission endpoint must respond quickly (<300ms typical) under normal school load.",
+        "Rate limiting must be configured to prevent abuse while allowing normal classroom bursts (e.g., 100 submissions within a few minutes from same Wi-Fi IP)."
+      ],
+      "auditability": [
+        "Changes to teacher accounts, courses, rosters, and system settings must be logged in an audit table.",
+        "Attendance records creation and manual adjustments must be logged with who did it and when.",
+        "Suspicious events (e.g., multiple student IDs from one device in one session, attempts from outside geofence, exceeding IP limits) must be recorded as fraud signals with a reason string."
+      ],
+      "usability": [
+        "UI must be responsive and usable on desktop and mobile (teachers may use tablets/phones at class).",
+        "Attendance views must support easy filtering by student and session.",
+        "CSV import flow must clearly show preview and mapping and require explicit confirmation.",
+        "Public attendance page must show clear success/failure messages and must not pretend success when network errors occur.",
+        "Offline scenarios (temporary network loss) must be handled with clear feedback and controlled retry logic."
+      ]
+    },
+    "data_model": {
+      "conventions": {
+        "id_type": "UUID (string) for all primary keys",
+        "timestamps": [
+          "created_at TIMESTAMP WITH TIME ZONE",
+          "updated_at TIMESTAMP WITH TIME ZONE"
+        ],
+        "soft_delete": "Entities may have is_active boolean instead of hard delete where meaningful (teachers, courses, students)."
+      },
+      "entities": [
+        {
+          "name": "admins",
+          "description": "Admin accounts.",
+          "fields": [
+            "id (UUID, PK)",
+            "email (string, unique, not null)",
+            "password_hash (string, not null)",
+            "first_name (string)",
+            "last_name (string)",
+            "is_active (boolean, default true)",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "teachers",
+          "description": "Teacher accounts managed by admin.",
+          "fields": [
+            "id (UUID, PK)",
+            "email (string, unique, not null)",
+            "password_hash (string, not null)",
+            "first_name (string)",
+            "last_name (string)",
+            "is_active (boolean, default true)",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "courses",
+          "description": "Courses taught by a specific teacher.",
+          "fields": [
+            "id (UUID, PK)",
+            "name (string, not null)",
+            "code (string, nullable, optional course code like 'MATH101')",
+            "description (string, nullable)",
+            "teacher_id (UUID, FK -> teachers.id, not null)",
+            "is_active (boolean, default true)",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "students",
+          "description": "Students as roster entries; global unique Student ID across courses.",
+          "fields": [
+            "id (UUID, PK)",
+            "student_id (string, not null, external ID entered by students on attendance page; must be unique across the system)",
+            "first_name (string, not null)",
+            "last_name (string, not null)",
+            "gender (string, nullable, e.g., 'M', 'F', 'Other')",
+            "program (string, nullable, e.g., 'Engineering', 'Business')",
+            "is_active (boolean, default true)",
+            "created_at",
+            "updated_at"
+          ],
+          "constraints": [
+            "student_id must be globally unique. Admin must ensure CSVs are consistent with this rule; the system must reject imports that would cause duplicate student_id with conflicting identity data unless explicitly resolved via merge UI."
+          ]
+        },
+        {
+          "name": "course_enrollments",
+          "description": "Many-to-many relation between students and courses.",
+          "fields": [
+            "id (UUID, PK)",
+            "course_id (UUID, FK -> courses.id, not null)",
+            "student_id_fk (UUID, FK -> students.id, not null)",
+            "created_at",
+            "updated_at"
+          ],
+          "constraints": [
+            "Unique constraint on (course_id, student_id_fk) to prevent duplicate enrollments."
+          ]
+        },
+        {
+          "name": "attendance_sessions",
+          "description": "An attendance session (QR event) for a course.",
+          "fields": [
+            "id (UUID, PK)",
+            "course_id (UUID, FK -> courses.id, not null)",
+            "teacher_id (UUID, FK -> teachers.id, not null)",
+            "session_name (string, nullable, e.g., 'Week 1 - Lecture 1')",
+            "session_date (date, not null)",
+            "start_time (time, nullable, when session was opened)",
+            "end_time (time, nullable, when session was closed or auto-closed)",
+            "is_open (boolean, not null, default true at creation; false when closed)",
+            "qr_token (string, not null, unique random token used in QR URL)",
+            "qr_expires_at (timestamp, nullable, if an explicit duration was set)",
+            "hard_expires_at (timestamp, not null, computed as min(session_open_time + system_max_duration, qr_expires_at if set))",
+            "created_at",
+            "updated_at"
+          ],
+          "constraints": [
+            "Unique constraint on qr_token.",
+            "teacher_id must match the teacher owning course_id; enforced via application logic."
+          ]
+        },
+        {
+          "name": "attendance_records",
+          "description": "A record of a student's presence in a specific attendance session.",
+          "fields": [
+            "id (UUID, PK)",
+            "attendance_session_id (UUID, FK -> attendance_sessions.id, not null)",
+            "course_id (UUID, FK -> courses.id, not null)",
+            "student_id_fk (UUID, FK -> students.id, not null)",
+            "student_id_value (string, not null, snapshot of Student ID entered or from roster)",
+            "status (string enum: 'present', 'absent', 'manual_present', 'manual_absent', 'flagged')",
+            "submitted_at (timestamp, not null)",
+            "submitted_via (string enum: 'qr', 'manual')",
+            "submitted_by_teacher_id (UUID, FK -> teachers.id, nullable; null for QR, set for manual updates)",
+            "client_device_id (string, nullable, stable identifier from client fingerprint; may be hashed)",
+            "client_ip (string, nullable)",
+            "client_user_agent (string, nullable)",
+            "client_geo_lat (numeric, nullable)",
+            "client_geo_lng (numeric, nullable)",
+            "client_geo_accuracy_m (numeric, nullable)",
+            "fraud_flag_reason (string, nullable, explanation if status = 'flagged')",
+            "created_at",
+            "updated_at"
+          ],
+          "constraints": [
+            "Unique constraint on (attendance_session_id, student_id_fk) to prevent duplicate attendance for same student in same session.",
+            "Application must ensure that a record exists only if student is enrolled in the course."
+          ]
+        },
+        {
+          "name": "student_import_batches",
+          "description": "Represents a single CSV/Excel import operation for student rosters.",
+          "fields": [
+            "id (UUID, PK)",
+            "admin_id (UUID, FK -> admins.id, not null)",
+            "course_id (UUID, FK -> courses.id, nullable initially, must be set before commit)",
+            "original_filename (string)",
+            "status (string enum: 'uploaded', 'previewed', 'ready_to_commit', 'committed', 'failed', 'cancelled')",
+            "import_mode (string enum: 'add_only', 'add_or_update', 'sync_with_deactivation')",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "student_import_rows",
+          "description": "Raw rows from a CSV/Excel import before committing.",
+          "fields": [
+            "id (UUID, PK)",
+            "batch_id (UUID, FK -> student_import_batches.id, not null)",
+            "row_number (int, not null)",
+            "raw_student_id (string, not null)",
+            "raw_first_name (string)",
+            "raw_last_name (string)",
+            "raw_gender (string)",
+            "raw_program (string)",
+            "parsed (boolean, default false)",
+            "parsed_student_id (string, nullable)",
+            "parsed_first_name (string, nullable)",
+            "parsed_last_name (string, nullable)",
+            "parsed_gender (string, nullable)",
+            "parsed_program (string, nullable)",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "fraud_signals",
+          "description": "Records of suspicious attendance-related events for analysis.",
+          "fields": [
+            "id (UUID, PK)",
+            "attendance_session_id (UUID, FK -> attendance_sessions.id, nullable)",
+            "course_id (UUID, FK -> courses.id, nullable)",
+            "student_id_fk (UUID, FK -> students.id, nullable)",
+            "client_device_id (string, nullable)",
+            "client_ip (string, nullable)",
+            "signal_type (string enum: 'multiple_ids_same_device', 'too_many_requests_same_ip', 'outside_geofence', 'session_expired_submission', 'other')",
+            "details (string, human-readable description)",
+            "created_at"
+          ]
+        },
+        {
+          "name": "system_settings",
+          "description": "Global system settings for attendance and anti-fraud behavior. In simplest form contains only a single row.",
+          "fields": [
+            "id (UUID, PK)",
+            "max_session_duration_minutes (int, not null, e.g., 240)",
+            "min_session_duration_minutes (int, not null, e.g., 1)",
+            "max_submissions_per_device_per_session (int, not null, e.g., 1 or 2)",
+            "max_submissions_per_ip_per_session (int, not null, e.g., 200)",
+            "geofence_enabled (boolean, default false)",
+            "geofence_center_lat (numeric, nullable)",
+            "geofence_center_lng (numeric, nullable)",
+            "geofence_radius_meters (numeric, nullable, e.g., 300)",
+            "geo_required (boolean, default false, if true then lack of geolocation is rejected instead of allowed)",
+            "offline_retries_allowed (int, not null, e.g., 3)",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "name": "audit_logs",
+          "description": "Audit logs for critical changes.",
+          "fields": [
+            "id (UUID, PK)",
+            "actor_type (string enum: 'admin', 'teacher', 'system')",
+            "actor_id (UUID, nullable if system)",
+            "action (string, e.g. 'CREATE_TEACHER', 'IMPORT_STUDENTS', 'UPDATE_ATTENDANCE', 'UPDATE_SYSTEM_SETTINGS')",
+            "entity_type (string, e.g. 'teacher', 'course', 'student', 'attendance_session', 'attendance_record', 'system_settings')",
+            "entity_id (UUID, nullable if not applicable)",
+            "before_data (JSONB, nullable)",
+            "after_data (JSONB, nullable)",
+            "created_at"
+          ]
+        }
+      ]
+    },
+    "auth_and_security": {
+      "jwt": {
+        "access_token": {
+          "payload_fields": [
+            "sub (user id)",
+            "role ('admin' or 'teacher')",
+            "email"
+          ],
+          "lifetime_minutes": 30
+        },
+        "refresh_token": {
+          "payload_fields": [
+            "sub",
+            "role"
+          ],
+          "lifetime_days": 30
+        }
+      },
+      "passwords": {
+        "hashing_algorithm": "bcrypt or Argon2",
+        "min_length": 8,
+        "complexity": "Recommended at least 1 uppercase, 1 lowercase, 1 digit."
+      },
+      "rate_limiting": {
+        "public_attendance_submit": {
+          "per_ip_per_minute": 60,
+          "per_ip_per_session_total": "Must not exceed system_settings.max_submissions_per_ip_per_session.",
+          "behavior_on_exceed": "Reject request with error, log fraud_signals with signal_type 'too_many_requests_same_ip'."
+        }
+      },
+      "endpoints": {
+        "admin_login": {
+          "method": "POST",
+          "path": "/api/v1/auth/admin/login",
+          "body": {
+            "email": "string",
+            "password": "string"
+          },
+          "responses": {
+            "200": {
+              "access_token": "JWT string",
+              "refresh_token": "JWT string",
+              "user": {
+                "id": "string",
+                "role": "admin",
+                "email": "string",
+                "first_name": "string",
+                "last_name": "string"
+              }
+            },
+            "401": {
+              "error": "Invalid credentials"
+            }
+          }
+        },
+        "teacher_login": {
+          "method": "POST",
+          "path": "/api/v1/auth/teacher/login",
+          "body": {
+            "email": "string",
+            "password": "string"
+          },
+          "responses": {
+            "200": {
+              "access_token": "JWT string",
+              "refresh_token": "JWT string",
+              "user": {
+                "id": "string",
+                "role": "teacher",
+                "email": "string",
+                "first_name": "string",
+                "last_name": "string"
+              }
+            },
+            "401": {
+              "error": "Invalid credentials"
+            }
+          }
+        },
+        "refresh": {
+          "method": "POST",
+          "path": "/api/v1/auth/refresh",
+          "body": {
+            "refresh_token": "string"
+          },
+          "responses": {
+            "200": {
+              "access_token": "JWT string",
+              "refresh_token": "JWT string"
+            },
+            "401": {
+              "error": "Invalid or expired refresh token"
+            }
+          }
+        }
+      }
+    },
+    "api": {
+      "base_url": "/api/v1",
+      "admin_endpoints": {
+        "teachers": [
+          {
+            "method": "GET",
+            "path": "/admin/teachers",
+            "description": "List all teachers with pagination.",
+            "query": {
+              "page": "int (optional, default 1)",
+              "pageSize": "int (optional, default 20)",
+              "search": "string (optional, email or name)"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/teachers",
+            "description": "Create a teacher account.",
+            "body": {
+              "email": "string",
+              "first_name": "string",
+              "last_name": "string",
+              "password": "string"
+            }
+          },
+          {
+            "method": "PATCH",
+            "path": "/admin/teachers/:id",
+            "description": "Update teacher info (e.g., name, is_active, reset password).",
+            "body": {
+              "first_name": "string (optional)",
+              "last_name": "string (optional)",
+              "is_active": "boolean (optional)",
+              "password": "string (optional, for reset)"
+            }
+          }
+        ],
+        "courses": [
+          {
+            "method": "GET",
+            "path": "/admin/courses",
+            "description": "List all courses with teacher info.",
+            "query": {
+              "teacher_id": "string (optional filter)",
+              "is_active": "boolean (optional filter)",
+              "search": "string (optional, name/code)"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/courses",
+            "description": "Create a new course and assign it to a teacher.",
+            "body": {
+              "name": "string",
+              "code": "string (optional)",
+              "description": "string (optional)",
+              "teacher_id": "string"
+            }
+          },
+          {
+            "method": "PATCH",
+            "path": "/admin/courses/:id",
+            "description": "Update course info or reassign teacher.",
+            "body": {
+              "name": "string (optional)",
+              "code": "string (optional)",
+              "description": "string (optional)",
+              "teacher_id": "string (optional)",
+              "is_active": "boolean (optional)"
+            }
+          }
+        ],
+        "student_import": [
+          {
+            "method": "POST",
+            "path": "/admin/import/students/upload",
+            "description": "Upload CSV/Excel for a new import batch. Course may be selected now or later.",
+            "body": "multipart/form-data: file field 'file', and optional 'course_id', optional 'import_mode' ('add_only' | 'add_or_update' | 'sync_with_deactivation').",
+            "response": {
+              "batch_id": "string",
+              "rows_detected": "int"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/admin/import/students/batches",
+            "description": "List import batches with status and course.",
+            "query": {
+              "status": "string (optional)",
+              "course_id": "string (optional)"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/admin/import/students/batches/:batch_id/preview",
+            "description": "Preview parsed rows for a batch.",
+            "response": {
+              "batch": {
+                "id": "string",
+                "status": "string",
+                "course_id": "string or null",
+                "import_mode": "string"
+              },
+              "rows": [
+                {
+                  "row_number": "int",
+                  "raw_student_id": "string",
+                  "raw_first_name": "string",
+                  "raw_last_name": "string",
+                  "raw_gender": "string",
+                  "raw_program": "string"
+                }
+              ]
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/import/students/batches/:batch_id/assign-course",
+            "description": "Assign or change the target course for this batch.",
+            "body": {
+              "course_id": "string"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/import/students/batches/:batch_id/set-mode",
+            "description": "Set the import mode for this batch.",
+            "body": {
+              "import_mode": "string ('add_only'|'add_or_update'|'sync_with_deactivation')"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/import/students/batches/:batch_id/commit",
+            "description": "Commit the batch: create or update students and create course_enrollments according to import_mode.",
+            "response": {
+              "created_students": "int",
+              "updated_students": "int",
+              "created_enrollments": "int",
+              "reactivated_enrollments": "int",
+              "deactivated_enrollments": "int (only if import_mode = 'sync_with_deactivation')"
+            }
+          }
+        ],
+        "students": [
+          {
+            "method": "GET",
+            "path": "/admin/courses/:course_id/students",
+            "description": "List students enrolled in a course with search filter.",
+            "query": {
+              "q": "string (search by name or student_id)"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/admin/courses/:course_id/students",
+            "description": "Manually add a student to a course. Creates new student if student_id does not exist.",
+            "body": {
+              "student_id": "string (Student ID, required, must be unique if new student)",
+              "first_name": "string (required if student does not exist)",
+              "last_name": "string (required if student does not exist)",
+              "gender": "string (optional)",
+              "program": "string (optional)"
+            }
+          },
+          {
+            "method": "DELETE",
+            "path": "/admin/courses/:course_id/students/:student_id_fk",
+            "description": "Remove student from course_enrollments (soft removal from that course only)."
+          }
+        ],
+        "attendance_admin": [
+          {
+            "method": "GET",
+            "path": "/admin/courses/:course_id/attendance",
+            "description": "Get attendance matrix for course.",
+            "query": {
+              "from_date": "YYYY-MM-DD (optional)",
+              "to_date": "YYYY-MM-DD (optional)",
+              "student_id": "string (optional student_id filter)"
+            }
+          },
+          {
+            "method": "PATCH",
+            "path": "/admin/attendance-records/:id",
+            "description": "Manually adjust an attendance record. Status change will set submitted_via = 'manual' and submitted_by_teacher_id = null.",
+            "body": {
+              "status": "present|absent|manual_present|manual_absent|flagged",
+              "fraud_flag_reason": "string (optional, required if status = 'flagged')"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/admin/attendance-sessions",
+            "description": "List attendance sessions system-wide with filters.",
+            "query": {
+              "course_id": "string (optional)",
+              "teacher_id": "string (optional)",
+              "from_date": "YYYY-MM-DD (optional)",
+              "to_date": "YYYY-MM-DD (optional)"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/admin/fraud-signals",
+            "description": "List fraud signals with filters.",
+            "query": {
+              "course_id": "string (optional)",
+              "teacher_id": "string (optional)",
+              "signal_type": "string (optional)"
+            }
+          }
+        ],
+        "settings": [
+          {
+            "method": "GET",
+            "path": "/admin/system-settings",
+            "description": "Get current system settings."
+          },
+          {
+            "method": "PATCH",
+            "path": "/admin/system-settings",
+            "description": "Update system settings.",
+            "body": {
+              "max_session_duration_minutes": "int (optional)",
+              "min_session_duration_minutes": "int (optional)",
+              "max_submissions_per_device_per_session": "int (optional)",
+              "max_submissions_per_ip_per_session": "int (optional)",
+              "geofence_enabled": "boolean (optional)",
+              "geofence_center_lat": "number (optional)",
+              "geofence_center_lng": "number (optional)",
+              "geofence_radius_meters": "number (optional)",
+              "geo_required": "boolean (optional)",
+              "offline_retries_allowed": "int (optional)"
+            }
+          }
+        ]
+      },
+      "teacher_endpoints": {
+        "profile": [
+          {
+            "method": "GET",
+            "path": "/teacher/me",
+            "description": "Get teacher profile."
+          }
+        ],
+        "courses": [
+          {
+            "method": "GET",
+            "path": "/teacher/courses",
+            "description": "List courses owned by logged-in teacher."
+          },
+          {
+            "method": "POST",
+            "path": "/teacher/courses",
+            "description": "Create a new course owned by the teacher.",
+            "body": {
+              "name": "string",
+              "code": "string (optional)",
+              "description": "string (optional)"
+            }
+          }
+        ],
+        "students": [
+          {
+            "method": "GET",
+            "path": "/teacher/courses/:course_id/students",
+            "description": "List students in teacher's course with search filter.",
+            "query": {
+              "q": "string (optional search by name or student_id)"
+            }
+          }
+        ],
+        "attendance_sessions": [
+          {
+            "method": "POST",
+            "path": "/teacher/courses/:course_id/attendance-sessions",
+            "description": "Create and open a new attendance session for a course.",
+            "body": {
+              "session_name": "string (optional, e.g., 'Week 3 - Lecture')",
+              "session_date": "YYYY-MM-DD (optional, default today)",
+              "duration_minutes": "int (optional, must be between system_settings.min_session_duration_minutes and system_settings.max_session_duration_minutes)"
+            },
+            "response": {
+              "attendance_session_id": "string",
+              "qr_url": "string",
+              "qr_token": "string",
+              "qr_expires_at": "timestamp or null",
+              "hard_expires_at": "timestamp",
+              "session_date": "YYYY-MM-DD"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/teacher/attendance-sessions/:id/close",
+            "description": "Manually close an attendance session.",
+            "response": {
+              "is_open": "false",
+              "end_time": "time"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/teacher/attendance-sessions/:id",
+            "description": "Get details and attendance records for a session."
+          },
+          {
+            "method": "GET",
+            "path": "/teacher/courses/:course_id/attendance",
+            "description": "Get attendance summary for a course for teacher view.",
+            "query": {
+              "from_date": "YYYY-MM-DD (optional)",
+              "to_date": "YYYY-MM-DD (optional)",
+              "student_id": "string (optional filter)"
+            }
+          },
+          {
+            "method": "PATCH",
+            "path": "/teacher/attendance-records/:id",
+            "description": "Teacher manually adjusts attendance for their course session.",
+            "body": {
+              "status": "present|absent|manual_present|manual_absent|flagged",
+              "fraud_flag_reason": "string (optional, required if status = 'flagged')"
+            }
+          }
+        ]
+      },
+      "attendance_public_endpoints": {
+        "qr_submit": [
+          {
+            "method": "GET",
+            "path": "/attendance/qr",
+            "description": "Landing page opened when QR is scanned. Contains query params session_id and token.",
+            "query": {
+              "session_id": "string",
+              "token": "string"
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/api/v1/attendance/session/validate-public",
+            "description": "Validate session and token for public attendance. Used by frontend on QR page load.",
+            "query": {
+              "attendance_session_id": "string",
+              "qr_token": "string"
+            },
+            "response": {
+              "valid": "boolean",
+              "reason": "string (if not valid)",
+              "course_name": "string (if valid)",
+              "teacher_name": "string (if valid)",
+              "session_name": "string or null",
+              "session_date": "YYYY-MM-DD or null",
+              "is_open": "boolean",
+              "requires_geo": "boolean (from system_settings.geo_required or geofence_enabled)"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/api/v1/attendance/submit",
+            "description": "Submit attendance for a session by Student ID.",
+            "body": {
+              "attendance_session_id": "string",
+              "qr_token": "string",
+              "student_id": "string (Student ID that the student inputs)",
+              "client_device_id": "string (generated fingerprint or stable local id from browser)",
+              "geo": {
+                "lat": "number (optional)",
+                "lng": "number (optional)",
+                "accuracy_meters": "number (optional)"
+              }
+            },
+            "response": {
+              "status": "success or error",
+              "message": "string",
+              "already_recorded": "boolean (optional, true if duplicate)",
+              "flagged": "boolean (optional, true if recorded but flagged for review)"
+            }
+          }
+        ]
+      }
+    },
+    "business_logic": {
+      "attendance_submit_algorithm": [
+        "1. Receive POST /attendance/submit with attendance_session_id, qr_token, student_id, client_device_id, and optional geo.",
+        "2. Normalize student_id: trim whitespace and standardize format (e.g., uppercase, remove spaces) exactly the same way as during import.",
+        "3. Fetch the attendance_session by id. If not found, return error 'Invalid session' and do not log attendance.",
+        "4. Verify that attendance_session.qr_token equals qr_token. If mismatch, return error 'Invalid token'.",
+        "5. Check session time validity: if now > attendance_session.hard_expires_at, then if is_open is still true, set is_open = false and end_time = now, log fraud_signals with signal_type 'session_expired_submission', and return error 'Session closed'.",
+        "6. If attendance_session.is_open is false, reject with 'Session closed'.",
+        "7. Apply IP rate limiting: read client_ip from request, count previous successful and failed submissions for this attendance_session_id and client_ip. If count >= system_settings.max_submissions_per_ip_per_session, reject with 'Too many requests from this network' and log fraud_signals with signal_type 'too_many_requests_same_ip'.",
+        "8. Validate client_device_id: if missing or clearly invalid (empty), allow but mark the record as potentially weaker for fraud analysis; do not reject solely for missing device_id unless explicitly required by a future rule.",
+        "9. Geofence logic: if system_settings.geofence_enabled is true, then:",
+        "- If geo (lat/lng) is missing and system_settings.geo_required is true, reject with 'Location permission required to submit attendance'.",
+        "- If geo is present: compute distance between (geo.lat, geo.lng) and (geofence_center_lat, geofence_center_lng). If distance > geofence_radius_meters, reject with 'You are not in the allowed area' and log fraud_signals with signal_type 'outside_geofence'.",
+        "- If geo is missing and geo_required is false, allow submission but record null coordinates.",
+        "10. Find the student by students.student_id == normalized student_id. If not found, return 'Student not found' without creating anything.",
+        "11. Verify that there is a course_enrollment for (course_id = attendance_session.course_id, student_id_fk = this student's id). If not found, return 'You are not registered in this course'.",
+        "12. Check if there is already an attendance_records row for (attendance_session_id, student_id_fk). If exists, return a success response with already_recorded = true and do not create a new row (idempotent behavior). Do not treat this as an error from UX perspective.",
+        "13. Enforce per-device buddy-punching rule: count distinct student_id_fk values for existing attendance_records of this attendance_session_id where client_device_id equals the provided client_device_id. If client_device_id is not null and the number of distinct student_id_fk values is already >= system_settings.max_submissions_per_device_per_session, then:",
+        "- Reject the submission with error 'This device already submitted attendance for this session.' and log fraud_signals with signal_type 'multiple_ids_same_device'. Do not create a new attendance_records row.",
+        "14. If checks pass, create attendance_records with fields: attendance_session_id, course_id, student_id_fk, student_id_value = student.student_id, status = 'present', submitted_at = now, submitted_via = 'qr', submitted_by_teacher_id = null, client_device_id = provided value, client_ip = request IP, client_user_agent = request UA, client_geo_lat/lng/accuracy_m from geo.",
+        "15. Evaluate whether this record should be flagged but still accepted: for example, if geo indicates the edge of geofence, or if the same device has already one submission and max_submissions_per_device_per_session is 2. Implementation: if a soft rule is violated but system is configured to 'flag_not_reject', set status = 'flagged' and fraud_flag_reason accordingly, and also create a fraud_signals entry. The default behavior is to strictly reject new distinct IDs beyond max_submissions_per_device_per_session.",
+        "16. Return success message with flagged = (status == 'flagged').",
+        "17. The system never allows more than system_settings.max_submissions_per_device_per_session distinct student IDs from the same device in the same session."
+      ],
+      "attendance_auto_close_logic": [
+        "1. When a session is created, compute start_time = now and session_date = today's date if not provided.",
+        "2. Validate requested duration_minutes: if provided, it must be between system_settings.min_session_duration_minutes and system_settings.max_session_duration_minutes. If omitted, set logical duration_minutes = system_settings.max_session_duration_minutes.",
+        "3. Compute qr_expires_at = start_time + duration_minutes if the teacher provided duration_minutes, otherwise set qr_expires_at = null (since QR might be visually removed earlier but system must still enforce hard limit).",
+        "4. Always compute hard_expires_at = start_time + system_settings.max_session_duration_minutes. This is the absolute maximum, regardless of teacher preference.",
+        "5. A background cron job periodically scans attendance_sessions where is_open = true and now > hard_expires_at; for each such session, it sets is_open = false and end_time = hard_expires_at.",
+        "6. Additionally, each call to /attendance/submit also checks hard_expires_at as described in the attendance_submit_algorithm, so that even if cron is delayed, submissions after hard_expires_at are rejected.",
+        "7. Teachers can manually close sessions earlier by calling /teacher/attendance-sessions/:id/close, which sets is_open = false and end_time = now; after this, all submissions are rejected."
+      ],
+      "student_import_logic": [
+        "1. Admin uploads CSV/Excel file and chooses import_mode: 'add_only', 'add_or_update', or 'sync_with_deactivation'.",
+        "2. Backend parses file and inserts rows into student_import_rows with raw_* fields and parsed_* where possible. Basic validation ensures required columns (student_id, first_name, last_name) exist.",
+        "3. Admin opens preview UI, sees sample rows, and assigns target course if not yet assigned. Batch cannot be committed until course_id and import_mode are set.",
+        "4. On commit, the system processes each row sequentially or in small batches:",
+        "- Normalize parsed_student_id using the same function as attendance submissions.",
+        "- Try to find an existing students record with student_id = parsed_student_id.",
+        "- If found and import_mode is 'add_or_update' or 'sync_with_deactivation': update student's first_name, last_name, gender, program if the imported values are non-empty and differ, respecting that student identity is defined primarily by student_id.",
+        "- If found and import_mode is 'add_only': do not update fields, only ensure enrollment.",
+        "- If not found: create a new students record with given student_id, first_name, last_name, gender, program, is_active = true.",
+        "- Ensure a course_enrollments record exists for (target course_id, student_id_fk). If not, create it.",
+        "5. If import_mode = 'sync_with_deactivation': after processing all import rows, the system collects the set of student_id_fk that appear in this batch for the course. For all existing course_enrollments in this course that belong to students not in that set, the system can either (a) mark them as logically deactivated for that course via a separate boolean field (not modeled here but can be added), or (b) present these as 'to be removed' in a second confirmation step. For simplicity in this JSON, the default is to not auto-deactivate; but the endpoint's response must list potential 'missing' enrollments so that admin can decide manual cleanup.",
+        "6. The commit operation returns counts of created_students, updated_students, created_enrollments, reactivated_enrollments (if previously deactivated), and deactivated_enrollments (if this behavior is implemented).",
+        "7. If an incoming row attempts to assign a student_id that already exists with completely different name (e.g., different first_name and last_name) and import_mode is 'add_or_update' or 'sync_with_deactivation', the system must treat this as a conflict and fail that row: the batch commit must either (a) reject entire batch and mark status = 'failed' with explanation, or (b) skip conflicted rows while committing the rest and report which rows were skipped. The default behavior in this JSON is to commit valid rows and mark conflicted rows in the response so admin can manually resolve them.",
+        "8. Student ID change scenario: because student_id is treated as stable and unique, if the institution changes student IDs, this must be handled manually by admin via a dedicated 'merge students' tool which is out of scope here. The import process will treat new student_id as a new student unless admin merges IDs manually."
+      ],
+      "buddy_punching_mitigation": [
+        "1. Each attendance submission includes client_device_id (a stable browser-created identifier stored in localStorage or similar).",
+        "2. In each attendance_session, system_settings.max_submissions_per_device_per_session defines how many distinct student IDs can be recorded from the same client_device_id. This is normally 1 or at most 2.",
+        "3. When a device attempts to submit for a second or subsequent distinct student_id in the same session, the system checks how many distinct student_id_fk values already exist for that client_device_id and attendance_session_id.",
+        "4. If the count is >= max_submissions_per_device_per_session, the system rejects the request with a clear error and logs a fraud_signals event.",
+        "5. The IP-based limit per session also reduces the ability of a remote attacker to spam submissions from the same network.",
+        "6. Teachers and admins can view fraud_signals and attendance_records with status 'flagged' to manually investigate suspicious patterns (for example, students who always appear together on the same device)."
+      ],
+      "student_id_typo_mitigation": [
+        "1. On the public QR page, when the student enters a student_id and presses 'Continue', the frontend may optionally call a 'lookup' endpoint (not strictly required but can be implemented) to retrieve the student's first_name and last_name and display 'Is this you: Ali Yıldız?'.",
+        "2. If such a preview is implemented, the student must confirm before the final submit. This reduces accidental typos that map to another real student's ID but cannot fully prevent fraudulent use.",
+        "3. Because student_id is treated as secret only known to the student, the system assumes that knowledge of another student's ID is limited. Realistically, in many schools it is not secret; hence fraud mechanisms must rely more on device and location checks than on ID secrecy.",
+        "4. Teachers can view per-session attendance tables sorted by device ID or IP to detect anomalies (e.g., multiple names from same device)."
+      ],
+      "offline_and_retry_logic": [
+        "1. The attendance QR page must clearly differentiate between:",
+        "- (a) A server-side validation error (e.g., not enrolled, session closed) which cannot be fixed by retry, and",
+        "- (b) Network errors (no internet, timeout) where a retry might succeed.",
+        "2. On network error, the frontend must show a clear message: 'Connection problem, your attendance was NOT recorded. Please retry while the QR is still visible.' and provide a 'Retry' button.",
+        "3. The frontend may maintain a simple in-memory retry counter per session and per browser tab. It must not silently queue submissions in the background after the student leaves the page, because that might give false confidence.",
+        "4. Optionally, the frontend may store a 'pending submission' in localStorage for a very short period (e.g., 5 minutes), but it must always re-check session validity at retry time. If the session is already closed, it must clearly say 'Session closed, attendance cannot be recorded anymore.'",
+        "5. The system_settings.offline_retries_allowed defines how many retry attempts the frontend should allow before suggesting the student speak to the teacher. After this limit, the UI should explain that they need manual intervention.",
+        "6. The backend maintains the true source of truth. The frontend must never show 'success' unless it received a 200 success response from /attendance/submit."
+      ]
+    },
+    "frontend": {
+      "layout": {
+        "global": {
+          "components": [
+            {
+              "name": "AppShell",
+              "description": "Wraps the entire app when user is logged in. Contains header, sidebar (for admin and teacher), and main content area."
+            },
+            {
+              "name": "Header",
+              "description": "Top bar with app logo/name, current user role and name, and logout button."
+            },
+            {
+              "name": "Sidebar",
+              "description": "Navigation menu. Content is role-specific.",
+              "admin_items": [
+                "Dashboard",
+                "Teachers",
+                "Courses",
+                "Student Imports",
+                "Attendance",
+                "Fraud Signals",
+                "Settings"
+              ],
+              "teacher_items": [
+                "Dashboard",
+                "My Courses",
+                "Attendance",
+                "Profile"
+              ]
+            },
+            {
+              "name": "MainContent",
+              "description": "Flexible container where pages are rendered."
+            },
+            {
+              "name": "Toaster",
+              "description": "Global notification system for success/error messages."
+            }
+          ]
+        },
+        "responsive_rules": [
+          "On small screens, Sidebar collapses into a hamburger menu.",
+          "Tables should become horizontally scrollable with sticky header on narrow screens.",
+          "Buttons and interactive elements must be large enough for touch interaction on tablets/phones."
+        ]
+      },
+      "routes": {
+        "public": [
+          "/login/admin",
+          "/login/teacher",
+          "/attendance/qr"
+        ],
+        "admin": [
+          "/admin/dashboard",
+          "/admin/teachers",
+          "/admin/teachers/[teacherId]",
+          "/admin/courses",
+          "/admin/courses/[courseId]",
+          "/admin/courses/[courseId]/students",
+          "/admin/imports",
+          "/admin/imports/[batchId]",
+          "/admin/attendance",
+          "/admin/fraud-signals",
+          "/admin/settings"
+        ],
+        "teacher": [
+          "/teacher/dashboard",
+          "/teacher/courses",
+          "/teacher/courses/[courseId]",
+          "/teacher/courses/[courseId]/attendance",
+          "/teacher/attendance-sessions/[sessionId]",
+          "/teacher/profile"
+        ],
+        "attendance_public": [
+          "/attendance/qr"
+        ]
+      },
+      "pages_and_components": {
+        "login_admin_page": {
+          "path": "/login/admin",
+          "components": [
+            "Email input",
+            "Password input",
+            "Login button",
+            "Error message area",
+            "Link to /login/teacher for teachers"
+          ],
+          "behavior": [
+            "On submit, call /api/v1/auth/admin/login.",
+            "On success, store tokens securely and redirect to /admin/dashboard.",
+            "On failure, show a descriptive error."
+          ]
+        },
+        "login_teacher_page": {
+          "path": "/login/teacher",
+          "components": [
+            "Email input",
+            "Password input",
+            "Login button",
+            "Error message area",
+            "Link to /login/admin for admins"
+          ],
+          "behavior": [
+            "On submit, call /api/v1/auth/teacher/login.",
+            "On success, redirect to /teacher/dashboard."
+          ]
+        },
+        "admin_dashboard_page": {
+          "path": "/admin/dashboard",
+          "components": [
+            "Cards for total teachers, courses, active students.",
+            "Recent imports list.",
+            "Recent attendance sessions list.",
+            "Top fraud signals summary (last 7 days)."
+          ]
+        },
+        "admin_teachers_page": {
+          "path": "/admin/teachers",
+          "components": [
+            "Search input.",
+            "Table: Teacher email, name, is_active, number of courses.",
+            "Button: 'Add Teacher'.",
+            "Modal: Create/Edit teacher."
+          ]
+        },
+        "admin_courses_page": {
+          "path": "/admin/courses",
+          "components": [
+            "Filters: by teacher, active/inactive, search.",
+            "Table: Course name, code, teacher name, is_active, student count.",
+            "Button: 'Add Course'."
+          ]
+        },
+        "admin_course_detail_page": {
+          "path": "/admin/courses/[courseId]",
+          "components": [
+            "Course header: name, code, teacher info.",
+            "Edit form for course fields.",
+            "Tabs: 'Students', 'Attendance'."
+          ]
+        },
+        "admin_course_students_page": {
+          "path": "/admin/courses/[courseId]/students",
+          "components": [
+            "Search input: by student name or ID.",
+            "Table: Student ID, name, gender, program.",
+            "Button: 'Add Student Manually'.",
+            "Button: 'Import Students' linking to /admin/imports.",
+            "Optional tag to show if imported vs manually added."
+          ]
+        },
+        "admin_imports_page": {
+          "path": "/admin/imports",
+          "components": [
+            "Upload form: file input, optional course selector, import_mode selector.",
+            "Table of batches: id, filename, course, status, created_at.",
+            "Links to batch detail pages."
+          ]
+        },
+        "admin_import_batch_detail_page": {
+          "path": "/admin/imports/[batchId]",
+          "components": [
+            "Batch metadata: filename, status, course, import_mode.",
+            "Dropdown: course selector (if not set).",
+            "Radio/selector: import_mode (read-only if already set and processed).",
+            "Preview table of rows with pagination.",
+            "Summary of potential conflicts (e.g., student_id collisions).",
+            "Button: 'Commit Import' (enabled when course and import_mode are set).",
+            "Result area showing commit stats and errors."
+          ]
+        },
+        "admin_attendance_overview_page": {
+          "path": "/admin/attendance",
+          "components": [
+            "Filters: teacher, course, date range, student_id.",
+            "Table: course, session_date, session_name, present count, enrolled count, present percentage.",
+            "Links: 'View session details'.",
+            "Export CSV for filtered result."
+          ]
+        },
+        "admin_fraud_signals_page": {
+          "path": "/admin/fraud-signals",
+          "components": [
+            "Filters: course, teacher, signal_type, date range.",
+            "Table: date, course, session, student (if any), device_id, ip, signal_type, details.",
+            "Link to related attendance_session_detail_page.",
+            "Simple chart showing count of fraud_signals per day."
+          ]
+        },
+        "admin_settings_page": {
+          "path": "/admin/settings",
+          "components": [
+            "Form to view/update system_settings fields: max_session_duration_minutes, min_session_duration_minutes, max_submissions_per_device_per_session, max_submissions_per_ip_per_session, geofence_enabled, geofence_center_lat/lng, geofence_radius_meters, geo_required, offline_retries_allowed.",
+            "Validation messages and save button."
+          ]
+        },
+        "teacher_dashboard_page": {
+          "path": "/teacher/dashboard",
+          "components": [
+            "Card: number of courses.",
+            "List of upcoming or recent attendance sessions.",
+            "Link to 'My Courses'."
+          ]
+        },
+        "teacher_courses_page": {
+          "path": "/teacher/courses",
+          "components": [
+            "Button: 'Add Course'.",
+            "Table or cards: Course name, code, student count, quick actions to 'View' and 'Attendance'."
+          ]
+        },
+        "teacher_course_detail_page": {
+          "path": "/teacher/courses/[courseId]",
+          "components": [
+            "Course header: name, code, description.",
+            "Tabs: 'Students' and 'Attendance'.",
+            "Students tab: roster list with Student ID, name, search/filter.",
+            "Attendance tab: summary per session with link to details."
+          ]
+        },
+        "teacher_course_attendance_page": {
+          "path": "/teacher/courses/[courseId]/attendance",
+          "components": [
+            "Button: 'Start New Attendance Session'.",
+            "Modal: form for session_name, optional session_date, duration_minutes (validated against system_settings).",
+            "List of past sessions: session_date, session_name, present/enrolled counts, link to session detail."
+          ]
+        },
+        "teacher_attendance_session_detail_page": {
+          "path": "/teacher/attendance-sessions/[sessionId]",
+          "components": [
+            "Session info: course, date, start_time, end_time, is_open.",
+            "If is_open: QR code component showing qr_url, with countdown to hard_expires_at and to qr_expires_at if set.",
+            "Button: 'Close Session' if is_open.",
+            "Filters: search by student_id or name, filter by status (present, absent, flagged).",
+            "Attendance table: Student ID, name, status, submitted_at, submitted_via, client_device_id (masked), client_ip (masked), flagged reason.",
+            "Inline dropdown to change status (with confirmation).",
+            "Export CSV button for this session."
+          ]
+        },
+        "attendance_qr_page": {
+          "path": "/attendance/qr",
+          "description": "Public page used when QR is scanned.",
+          "components": [
+            "Loading indicator while validating session.",
+            "If invalid: error state with message (session not found, closed, invalid token).",
+            "If valid: show course name, teacher name, session name/date.",
+            "Input: Student ID.",
+            "Optional: after entering ID, show preview of student name for confirmation.",
+            "Button: 'Submit Attendance'.",
+            "Area for success, already_recorded, or error messages.",
+            "If system_settings.geofence_enabled: small note explaining that location permission will be requested.",
+            "If geolocation permission is requested: browser prompt, and UI handling for allow/deny."
+          ],
+          "behavior": [
+            "On load, read session_id and token from query. Call /api/v1/attendance/session/validate-public. If invalid, show error and disable form.",
+            "On first submit, optionally call a lookup endpoint to show the student's name (if implemented) and ask confirmation.",
+            "On final submit, collect client_device_id from localStorage (or generate new one if missing and store it), request geolocation if geofence_enabled, then call /api/v1/attendance/submit.",
+            "On success, show 'Attendance recorded successfully'.",
+            "On already_recorded, show 'Your attendance was already recorded for this session.'",
+            "On error due to closed session, show 'Session is closed. Please contact your teacher.'",
+            "On network error, show 'Connection problem, your attendance was NOT recorded. Please retry while the QR is visible.' and allow a limited number of retries according to system_settings.offline_retries_allowed.",
+            "Never show success unless backend confirmed with status = 'success'."
+          ]
+        }
+      }
+    },
+    "permissions_matrix": {
+      "admin": [
+        "Can call all /admin/* endpoints.",
+        "Cannot call /teacher/* endpoints as a teacher; if needed, impersonation would be a separate feature that is not in this spec.",
+        "Cannot access QR attendance or public submission as admin except for test purposes via browser.",
+        "Cannot log in to teacher UI routes using an admin token; frontend and backend must enforce role-based routing."
+      ],
+      "teacher": [
+        "Can call all /teacher/* endpoints for their own data.",
+        "Can only access courses where courses.teacher_id = current teacher.id.",
+        "Cannot access any /admin/* endpoints.",
+        "Cannot modify system_settings.",
+        "Can see fraud signals related to their sessions only if a dedicated teacher view is added later; otherwise they infer suspicious records from 'flagged' rows."
+      ],
+      "public": [
+        "Can access /attendance/qr page and /api/v1/attendance/session/validate-public and /api/v1/attendance/submit.",
+        "Cannot access any other parts of the API.",
+        "Public operations are constrained by session time, QR token, enrollments, device/IP limits, and optional geofence."
+      ]
+    },
+    "phases": {
+      "phase_1_mvp": [
+        "Implement core data model and migrations: admins, teachers, courses, students, course_enrollments, attendance_sessions, attendance_records, student_import_batches, student_import_rows, system_settings, audit_logs.",
+        "Implement auth endpoints and guards for admin and teacher.",
+        "Implement admin portal: dashboard, teachers CRUD, courses CRUD.",
+        "Implement basic student import workflow: upload, preview, assign course, commit in 'add_only' mode.",
+        "Implement teacher portal: courses view, start attendance session, view QR, see basic attendance per session.",
+        "Implement public attendance QR page and submit endpoint without geofence (geofence can come in phase 2).",
+        "Implement mandatory hard_expires_at and auto-close logic."
+      ],
+      "phase_2_anti_fraud_and_ux": [
+        "Implement device-based anti-buddy-punch logic: client_device_id capture, per-device limits, fraud_signals logging.",
+        "Implement IP-based rate limiting per session and per minute.",
+        "Implement geofence-based geo validation using system_settings and browser geolocation API.",
+        "Implement 'flagged' attendance status and fraud_signals admin page.",
+        "Implement offline-friendly UX: retry messages, but no silent offline queue.",
+        "Upgrade CSV import to support all three import_mode options, conflict handling, and better reporting.",
+        "Enhance attendance tables with filters, export to CSV, and suspicious pattern highlighting."
+      ]
+    }
+  }
+  

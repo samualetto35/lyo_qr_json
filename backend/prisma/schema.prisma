@@ -1,0 +1,277 @@
+// Prisma Schema for QR Attendance Platform
+// Database: PostgreSQL
+// ORM: Prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & ROLES
+// ============================================
+
+model Admin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  firstName     String?  @map("first_name")
+  lastName      String?  @map("last_name")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  importBatches StudentImportBatch[]
+
+  @@map("admins")
+}
+
+model Teacher {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  courses            Course[]
+  attendanceSessions AttendanceSession[]
+  attendanceRecords  AttendanceRecord[]  @relation("ManualAttendanceByTeacher")
+
+  @@map("teachers")
+}
+
+// ============================================
+// COURSES & STUDENTS
+// ============================================
+
+model Course {
+  id          String   @id @default(uuid())
+  name        String
+  code        String?
+  description String?
+  teacherId   String   @map("teacher_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  teacher            Teacher              @relation(fields: [teacherId], references: [id])
+  enrollments        CourseEnrollment[]
+  attendanceSessions AttendanceSession[]
+  attendanceRecords  AttendanceRecord[]
+  importBatches      StudentImportBatch[]
+  fraudSignals       FraudSignal[]
+
+  @@map("courses")
+}
+
+model Student {
+  id        String   @id @default(uuid())
+  studentId String   @unique @map("student_id") // External ID entered by students
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  gender    String?
+  program   String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  enrollments       CourseEnrollment[]
+  attendanceRecords AttendanceRecord[]
+  fraudSignals      FraudSignal[]
+
+  @@map("students")
+}
+
+model CourseEnrollment {
+  id        String   @id @default(uuid())
+  courseId  String   @map("course_id")
+  studentId String   @map("student_id_fk")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  course  Course  @relation(fields: [courseId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([courseId, studentId])
+  @@map("course_enrollments")
+}
+
+// ============================================
+// ATTENDANCE SESSIONS & RECORDS
+// ============================================
+
+model AttendanceSession {
+  id            String    @id @default(uuid())
+  courseId      String    @map("course_id")
+  teacherId     String    @map("teacher_id")
+  sessionName   String?   @map("session_name")
+  sessionDate   DateTime  @map("session_date") @db.Date
+  startTime     DateTime? @map("start_time") @db.Timestamptz(3)
+  endTime       DateTime? @map("end_time") @db.Timestamptz(3)
+  isOpen        Boolean   @default(true) @map("is_open")
+  qrToken       String    @unique @map("qr_token")
+  qrExpiresAt   DateTime? @map("qr_expires_at") @db.Timestamptz(3)
+  hardExpiresAt DateTime  @map("hard_expires_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  course            Course             @relation(fields: [courseId], references: [id])
+  teacher           Teacher            @relation(fields: [teacherId], references: [id])
+  attendanceRecords AttendanceRecord[]
+  fraudSignals      FraudSignal[]
+
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id                  String    @id @default(uuid())
+  attendanceSessionId String    @map("attendance_session_id")
+  courseId            String    @map("course_id")
+  studentId           String    @map("student_id_fk")
+  studentIdValue      String    @map("student_id_value") // Snapshot of entered Student ID
+  status              String    // 'present', 'absent', 'manual_present', 'manual_absent', 'flagged'
+  submittedAt         DateTime  @map("submitted_at")
+  submittedVia        String    @map("submitted_via") // 'qr', 'manual'
+  submittedByTeacherId String?  @map("submitted_by_teacher_id")
+  clientDeviceId      String?   @map("client_device_id")
+  clientIp            String?   @map("client_ip")
+  clientUserAgent     String?   @map("client_user_agent")
+  clientGeoLat        Decimal?  @map("client_geo_lat") @db.Decimal(10, 8)
+  clientGeoLng        Decimal?  @map("client_geo_lng") @db.Decimal(11, 8)
+  clientGeoAccuracyM  Decimal?  @map("client_geo_accuracy_m") @db.Decimal(10, 2)
+  fraudFlagReason     String?   @map("fraud_flag_reason")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  attendanceSession AttendanceSession @relation(fields: [attendanceSessionId], references: [id])
+  course            Course            @relation(fields: [courseId], references: [id])
+  student           Student           @relation(fields: [studentId], references: [id])
+  submittedByTeacher Teacher?         @relation("ManualAttendanceByTeacher", fields: [submittedByTeacherId], references: [id])
+
+  @@unique([attendanceSessionId, studentId])
+  @@map("attendance_records")
+}
+
+// ============================================
+// STUDENT IMPORT
+// ============================================
+
+model StudentImportBatch {
+  id               String   @id @default(uuid())
+  adminId          String   @map("admin_id")
+  courseId         String?  @map("course_id")
+  originalFilename String?  @map("original_filename")
+  status           String   // 'uploaded', 'previewed', 'ready_to_commit', 'committed', 'failed', 'cancelled'
+  importMode       String?  @map("import_mode") // 'add_only', 'add_or_update', 'sync_with_deactivation'
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  admin Admin               @relation(fields: [adminId], references: [id])
+  course Course?            @relation(fields: [courseId], references: [id])
+  rows   StudentImportRow[]
+
+  @@map("student_import_batches")
+}
+
+model StudentImportRow {
+  id               String   @id @default(uuid())
+  batchId          String   @map("batch_id")
+  rowNumber        Int      @map("row_number")
+  rawStudentId     String   @map("raw_student_id")
+  rawFirstName     String?  @map("raw_first_name")
+  rawLastName      String?  @map("raw_last_name")
+  rawGender        String?  @map("raw_gender")
+  rawProgram       String?  @map("raw_program")
+  parsed           Boolean  @default(false)
+  parsedStudentId  String?  @map("parsed_student_id")
+  parsedFirstName  String?  @map("parsed_first_name")
+  parsedLastName   String?  @map("parsed_last_name")
+  parsedGender     String?  @map("parsed_gender")
+  parsedProgram    String?  @map("parsed_program")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  batch StudentImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@map("student_import_rows")
+}
+
+// ============================================
+// FRAUD DETECTION
+// ============================================
+
+model FraudSignal {
+  id                  String    @id @default(uuid())
+  attendanceSessionId String?   @map("attendance_session_id")
+  courseId            String?   @map("course_id")
+  studentId           String?   @map("student_id_fk")
+  clientDeviceId      String?   @map("client_device_id")
+  clientIp            String?   @map("client_ip")
+  signalType          String    @map("signal_type") // 'multiple_ids_same_device', 'too_many_requests_same_ip', 'outside_geofence', 'session_expired_submission', 'other'
+  details             String
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  attendanceSession AttendanceSession? @relation(fields: [attendanceSessionId], references: [id])
+  course            Course?            @relation(fields: [courseId], references: [id])
+  student           Student?           @relation(fields: [studentId], references: [id])
+
+  @@map("fraud_signals")
+}
+
+// ============================================
+// SYSTEM SETTINGS
+// ============================================
+
+model SystemSettings {
+  id                                 String   @id @default(uuid())
+  maxSessionDurationMinutes          Int      @map("max_session_duration_minutes")
+  minSessionDurationMinutes          Int      @map("min_session_duration_minutes")
+  maxSubmissionsPerDevicePerSession  Int      @map("max_submissions_per_device_per_session")
+  maxSubmissionsPerIpPerSession      Int      @map("max_submissions_per_ip_per_session")
+  geofenceEnabled                    Boolean  @default(false) @map("geofence_enabled")
+  geofenceCenterLat                  Decimal? @map("geofence_center_lat") @db.Decimal(10, 8)
+  geofenceCenterLng                  Decimal? @map("geofence_center_lng") @db.Decimal(11, 8)
+  geofenceRadiusMeters               Decimal? @map("geofence_radius_meters") @db.Decimal(10, 2)
+  geoRequired                        Boolean  @default(false) @map("geo_required")
+  offlineRetriesAllowed              Int      @map("offline_retries_allowed")
+  createdAt                          DateTime @default(now()) @map("created_at")
+  updatedAt                          DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorType  String   @map("actor_type") // 'admin', 'teacher', 'system'
+  actorId    String?  @map("actor_id") // No foreign key - just stores the ID as a string
+  action     String   // 'CREATE_TEACHER', 'IMPORT_STUDENTS', 'UPDATE_ATTENDANCE', etc.
+  entityType String   @map("entity_type") // 'teacher', 'course', 'student', etc.
+  entityId   String?  @map("entity_id")
+  beforeData Json?    @map("before_data")
+  afterData  Json?    @map("after_data")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
