@@ -124,9 +124,23 @@ async function bootstrap() {
   allowedOrigins.push('http://localhost:3000', 'http://localhost:3001');
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️  [CORS] Blocked origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
+  
+  console.log(`🌐 [CORS] Allowed origins: ${allowedOrigins.join(', ')}`);
 
   // Global validation pipe
   app.useGlobalPipes(
