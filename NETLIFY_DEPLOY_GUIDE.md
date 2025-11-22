@@ -104,6 +104,18 @@ Netlify dashboard'da şu environment variable'ın set edildiğinden emin olun:
 
 ---
 
+## ⚠️ ÖNEMLİ: Railway'de FRONTEND_URL Variable'ını Set Edin
+
+Railway'de backend servisinizin **Variables** sekmesine gidin ve şunu ekleyin/güncelleyin:
+
+```
+FRONTEND_URL=https://lyoqr.netlify.app
+```
+
+**Not:** Bu variable yoksa CORS hatası alırsınız!
+
+---
+
 ## ✅ Checklist
 
 - [ ] Railway backend URL'ini aldım
