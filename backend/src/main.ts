@@ -110,18 +110,21 @@ async function bootstrap() {
 
   // Enable CORS
   // Production: Allow frontend URL (Netlify) and localhost for development
-  const allowedOrigins: string[] = [];
+  const allowedOriginsSet = new Set<string>();
   
   // Add frontend URL if set
   if (process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL);
+    allowedOriginsSet.add(process.env.FRONTEND_URL);
   }
   
   // Always allow Netlify frontend
-  allowedOrigins.push('https://lyoqr.netlify.app');
+  allowedOriginsSet.add('https://lyoqr.netlify.app');
   
   // Allow localhost for development
-  allowedOrigins.push('http://localhost:3000', 'http://localhost:3001');
+  allowedOriginsSet.add('http://localhost:3000');
+  allowedOriginsSet.add('http://localhost:3001');
+  
+  const allowedOrigins = Array.from(allowedOriginsSet);
 
   app.enableCors({
     origin: (origin, callback) => {
