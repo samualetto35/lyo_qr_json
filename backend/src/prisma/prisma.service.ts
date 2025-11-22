@@ -19,14 +19,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         `;
         const tableNames = tables.map(t => t.tablename);
         console.log(`📊 [PRISMA] Database tables found: ${tableNames.length} tables`);
-        console.log(`📋 [PRISMA] Table names: ${tableNames.join(', ')}`);
+        if (tableNames.length > 0) {
+          console.log(`📋 [PRISMA] Table names: ${tableNames.slice(0, 6).join(', ')}${tableNames.length > 6 ? `... (+${tableNames.length - 6} more)` : ''}`);
+        }
         
         // Check specifically for attendance_sessions
         const hasAttendanceSessions = tableNames.includes('attendance_sessions');
         if (hasAttendanceSessions) {
-          console.log('✅ [PRISMA] attendance_sessions table exists!');
+          console.log('✅ [PRISMA] attendance_sessions table EXISTS - scheduler should work!');
         } else {
-          console.error('❌ [PRISMA] attendance_sessions table NOT found!');
+          console.error('❌ [PRISMA] attendance_sessions table NOT FOUND - scheduler will fail!');
+          console.error(`❌ [PRISMA] Available tables: ${tableNames.join(', ') || 'NONE'}`);
         }
       } catch (testError: any) {
         console.warn('⚠️  [PRISMA] Could not verify tables:', testError.message);
