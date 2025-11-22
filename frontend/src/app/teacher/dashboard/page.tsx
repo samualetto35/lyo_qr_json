@@ -12,12 +12,37 @@ export default function TeacherDashboardPage() {
 
   useEffect(() => {
     setMounted(true)
-    const currentUser = authService.getUser()
-    setUser(currentUser)
     
-    if (!currentUser || currentUser.role !== 'teacher') {
-      router.push('/login/teacher')
+    // Wait a bit for cookies to be available after redirect
+    const checkAuth = () => {
+      const currentUser = authService.getUser()
+      
+      if (currentUser && currentUser.role === 'teacher') {
+        setUser(currentUser)
+      } else {
+        // If no user found, check token to see if it's still loading
+        const token = authService.isAuthenticated()
+        if (!token) {
+          router.push('/login/teacher')
+        } else {
+          // Token exists but user not parsed yet, retry after a moment
+          setTimeout(() => {
+            const retryUser = authService.getUser()
+            if (retryUser && retryUser.role === 'teacher') {
+              setUser(retryUser)
+            } else {
+              router.push('/login/teacher')
+            }
+          }, 200)
+        }
+      }
     }
+    
+    // Check immediately and also after a short delay
+    checkAuth()
+    const timeout = setTimeout(checkAuth, 300)
+    
+    return () => clearTimeout(timeout)
   }, [router])
 
   const handleLogout = () => {
@@ -25,7 +50,15 @@ export default function TeacherDashboardPage() {
     router.push('/login/teacher')
   }
 
-  if (!mounted || !user) return null
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-gray-100">

@@ -45,8 +45,15 @@ api.interceptors.response.use(
 
         const { access_token, refresh_token } = response.data;
 
-        Cookies.set('access_token', access_token, { expires: 1/48 }); // 30 minutes
-        Cookies.set('refresh_token', refresh_token, { expires: 30 });
+        const isProduction = window.location.protocol === 'https:';
+        const cookieOptions = {
+          expires: 1/48,
+          secure: isProduction,
+          sameSite: 'lax' as const,
+          path: '/',
+        };
+        Cookies.set('access_token', access_token, cookieOptions);
+        Cookies.set('refresh_token', refresh_token, { ...cookieOptions, expires: 30 });
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);

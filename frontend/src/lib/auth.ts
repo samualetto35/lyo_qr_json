@@ -20,10 +20,21 @@ export const authService = {
     const response = await api.post('/auth/admin/login', { email, password });
     const data = response.data;
 
-    // Store tokens and user info
-    Cookies.set('access_token', data.access_token, { expires: 1/48 }); // 30 min
-    Cookies.set('refresh_token', data.refresh_token, { expires: 30 });
-    Cookies.set('user', JSON.stringify(data.user), { expires: 30 });
+    // Store tokens and user info with proper cookie settings for HTTPS
+    const isProduction = window.location.protocol === 'https:';
+    const cookieOptions = {
+      expires: 1/48, // 30 min for access token
+      secure: isProduction,
+      sameSite: 'lax' as const, // Allows cross-site requests on same-site navigations
+      path: '/',
+    };
+    
+    Cookies.set('access_token', data.access_token, cookieOptions);
+    Cookies.set('refresh_token', data.refresh_token, { ...cookieOptions, expires: 30 });
+    Cookies.set('user', JSON.stringify(data.user), { ...cookieOptions, expires: 30 });
+
+    // Wait a bit to ensure cookies are set before redirect
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     return data;
   },
@@ -32,9 +43,20 @@ export const authService = {
     const response = await api.post('/auth/teacher/login', { email, password });
     const data = response.data;
 
-    Cookies.set('access_token', data.access_token, { expires: 1/48 });
-    Cookies.set('refresh_token', data.refresh_token, { expires: 30 });
-    Cookies.set('user', JSON.stringify(data.user), { expires: 30 });
+    const isProduction = window.location.protocol === 'https:';
+    const cookieOptions = {
+      expires: 1/48,
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+    
+    Cookies.set('access_token', data.access_token, cookieOptions);
+    Cookies.set('refresh_token', data.refresh_token, { ...cookieOptions, expires: 30 });
+    Cookies.set('user', JSON.stringify(data.user), { ...cookieOptions, expires: 30 });
+
+    // Wait a bit to ensure cookies are set before redirect
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     return data;
   },

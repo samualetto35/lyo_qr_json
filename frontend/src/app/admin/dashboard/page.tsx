@@ -12,15 +12,48 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     setMounted(true)
-    const currentUser = authService.getUser()
-    setUser(currentUser)
     
-    if (!currentUser || currentUser.role !== 'admin') {
-      router.push('/login/admin')
+    // Wait a bit for cookies to be available after redirect
+    const checkAuth = () => {
+      const currentUser = authService.getUser()
+      
+      if (currentUser && currentUser.role === 'admin') {
+        setUser(currentUser)
+      } else {
+        // If no user found, check token to see if it's still loading
+        const token = authService.isAuthenticated()
+        if (!token) {
+          router.push('/login/admin')
+        } else {
+          // Token exists but user not parsed yet, retry after a moment
+          setTimeout(() => {
+            const retryUser = authService.getUser()
+            if (retryUser && retryUser.role === 'admin') {
+              setUser(retryUser)
+            } else {
+              router.push('/login/admin')
+            }
+          }, 200)
+        }
+      }
     }
+    
+    // Check immediately and also after a short delay
+    checkAuth()
+    const timeout = setTimeout(checkAuth, 300)
+    
+    return () => clearTimeout(timeout)
   }, [router])
 
-  if (!mounted || !user) return null
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   const handleLogout = () => {
     authService.logout()
