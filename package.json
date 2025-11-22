@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "cd backend && npm ci && npm run build && npx prisma generate",
-    "start": "cd backend && npm run start:prod",
-    "start:prod": "cd backend && npm run start:prod"
+    "start": "cd backend && node dist/main",
+    "start:prod": "cd backend && node dist/main"
   },
   "engines": {
     "node": ">=20.0.0"
