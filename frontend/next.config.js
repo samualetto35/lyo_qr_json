@@ -5,6 +5,8 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Netlify için
+  trailingSlash: false,
 }
 
 module.exports = nextConfig
