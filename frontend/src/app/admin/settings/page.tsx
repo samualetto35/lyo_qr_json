@@ -32,21 +32,25 @@ export default function AdminSettingsPage() {
       return response.data
     },
     enabled: !!user,
-    onSuccess: (data) => {
-      setFormData({
-        max_session_duration_minutes: data.maxSessionDurationMinutes,
-        min_session_duration_minutes: data.minSessionDurationMinutes,
-        max_submissions_per_device_per_session: data.maxSubmissionsPerDevicePerSession,
-        max_submissions_per_ip_per_session: data.maxSubmissionsPerIpPerSession,
-        geofence_enabled: data.geofenceEnabled,
-        geofence_center_lat: data.geofenceCenterLat || '',
-        geofence_center_lng: data.geofenceCenterLng || '',
-        geofence_radius_meters: data.geofenceRadiusMeters || '',
-        geo_required: data.geoRequired,
-        offline_retries_allowed: data.offlineRetriesAllowed,
-      })
-    },
   })
+
+  // Update form data when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        max_session_duration_minutes: settings.maxSessionDurationMinutes,
+        min_session_duration_minutes: settings.minSessionDurationMinutes,
+        max_submissions_per_device_per_session: settings.maxSubmissionsPerDevicePerSession,
+        max_submissions_per_ip_per_session: settings.maxSubmissionsPerIpPerSession,
+        geofence_enabled: settings.geofenceEnabled,
+        geofence_center_lat: settings.geofenceCenterLat || '',
+        geofence_center_lng: settings.geofenceCenterLng || '',
+        geofence_radius_meters: settings.geofenceRadiusMeters || '',
+        geo_required: settings.geoRequired,
+        offline_retries_allowed: settings.offlineRetriesAllowed,
+      })
+    }
+  }, [settings])
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {

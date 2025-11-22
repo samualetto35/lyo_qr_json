@@ -37,7 +37,7 @@ export default function TeacherAttendanceSessionDetailPage() {
       return response.data
     },
     enabled: !!sessionId && !!user,
-    refetchInterval: (data) => data?.session?.is_open ? 5000 : false, // Only refresh if session is open
+    refetchInterval: (query) => query.state.data?.session?.is_open ? 5000 : false, // Only refresh if session is open
   })
 
   const { data: eligibleStudents } = useQuery({
