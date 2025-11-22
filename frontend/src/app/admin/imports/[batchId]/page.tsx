@@ -34,8 +34,7 @@ export default function AdminImportBatchDetailPage() {
       const response = await api.get(`/admin/import/students/batches/${batchId}/preview`)
       return response.data
     },
-    enabled: !!user,
-    enabled: !!batchId,
+    enabled: !!user && !!batchId,
   })
 
   const { data: courses } = useQuery({
