@@ -135,9 +135,7 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  console.error('❌ [STARTUP] Fatal error during bootstrap:', error);
+  console.error('❌ [FATAL]', error.message);
   process.exit(1);
 });
-
-bootstrap();
 
