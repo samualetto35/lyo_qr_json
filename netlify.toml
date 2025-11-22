@@ -1,6 +1,5 @@
 [build]
   base = "frontend"
-  publish = "frontend/.next"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -9,5 +8,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Next.js plugin handles routing automatically
+# Next.js plugin handles build and routing automatically
 
