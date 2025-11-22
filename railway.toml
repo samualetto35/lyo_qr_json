@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "npm run build:with-migration"
 
 [deploy]
-startCommand = "cd backend && npx prisma generate && npx prisma migrate deploy && (npm run prisma:seed || true) && npm run start:prod"
+startCommand = "bash backend/scripts/deploy.sh && cd backend && npm run start:prod"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

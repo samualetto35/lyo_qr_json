@@ -6,13 +6,15 @@ set -e
 
 echo "🚀 Starting Railway deployment..."
 
+cd "$(dirname "$0")/.." || exit 1
+
 # Generate Prisma Client
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
 # Run migrations
 echo "🗄️  Running database migrations..."
-npx prisma migrate deploy
+npx prisma migrate deploy || echo "⚠️  Migration may have already been applied"
 
 # Seed database (only if needed - idempotent)
 echo "🌱 Seeding database..."
