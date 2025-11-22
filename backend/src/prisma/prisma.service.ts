@@ -11,12 +11,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       
       // Test query to verify tables exist
       try {
-        const tableCount = await this.$queryRaw`
-          SELECT count(*) as count 
-          FROM information_schema.tables 
-          WHERE table_schema = 'public'
+        const tables = await this.$queryRaw<Array<{ tablename: string }>>`
+          SELECT tablename 
+          FROM pg_tables 
+          WHERE schemaname = 'public'
+          ORDER BY tablename
         `;
-        console.log(`📊 [PRISMA] Database tables check: ${JSON.stringify(tableCount)}`);
+        const tableNames = tables.map(t => t.tablename);
+        console.log(`📊 [PRISMA] Database tables found: ${tableNames.length} tables`);
+        console.log(`📋 [PRISMA] Table names: ${tableNames.join(', ')}`);
+        
+        // Check specifically for attendance_sessions
+        const hasAttendanceSessions = tableNames.includes('attendance_sessions');
+        if (hasAttendanceSessions) {
+          console.log('✅ [PRISMA] attendance_sessions table exists!');
+        } else {
+          console.error('❌ [PRISMA] attendance_sessions table NOT found!');
+        }
       } catch (testError: any) {
         console.warn('⚠️  [PRISMA] Could not verify tables:', testError.message);
       }
