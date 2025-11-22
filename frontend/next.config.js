@@ -6,8 +6,6 @@ const nextConfig = {
     domains: [],
   },
   trailingSlash: false,
-  // Netlify plugin için output ayarı
-  output: 'standalone',
 }
 
 module.exports = nextConfig
