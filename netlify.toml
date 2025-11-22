@@ -1,12 +1,13 @@
 [build]
   base = "frontend"
-  publish = "frontend/.next"
+  command = "npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_PUBLIC_API_URL = "https://lyoqrjson-production.up.railway.app/api/v1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Next.js plugin handles routing automatically
+# Next.js plugin automatically handles publish directory and routing
 
