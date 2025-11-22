@@ -7,6 +7,8 @@ const nextConfig = {
   },
   // Netlify için
   trailingSlash: false,
+  // Netlify için output
+  output: 'standalone',
 }
 
 module.exports = nextConfig

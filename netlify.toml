@@ -1,9 +1,13 @@
 [build]
   base = "frontend"
+  command = "npm install && npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
   NEXT_PUBLIC_API_URL = "https://lyoqrjson-production.up.railway.app/api/v1"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
