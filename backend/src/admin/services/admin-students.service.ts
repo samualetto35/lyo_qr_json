@@ -371,7 +371,7 @@ export class AdminStudentsService {
       },
       students,
       total_students: students.length,
-      total_sessions,
+      total_sessions: totalSessions,
     };
   }
 
