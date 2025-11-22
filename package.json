@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd backend && npm install && npm run build && npx prisma generate",
+    "build": "cd backend && npm ci && npm run build && npx prisma generate",
     "start": "cd backend && npm run start:prod"
   },
   "engines": {
-    "node": "20.x",
-    "npm": "10.x"
+    "node": ">=20.0.0"
   }
 }
 
