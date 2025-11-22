@@ -267,7 +267,13 @@ export class AdminStudentsService {
         }
       }
 
-      const attendanceRecords = studentSessions.map((r) => ({
+      const attendanceRecords: Array<{
+        session_id: string;
+        session_name: string | null;
+        session_date: Date;
+        status: string;
+        submitted_at: Date | null;
+      }> = studentSessions.map((r) => ({
         session_id: r.attendanceSession.id,
         session_name: r.attendanceSession.sessionName,
         session_date: r.attendanceSession.sessionDate,

@@ -120,7 +120,6 @@ export class AdminHealthSystemService {
       actorId: adminId,
       action: 'IMPORT_HEALTH_SYSTEM_STUDENTS',
       entityType: 'health_system_student',
-      entityId: null,
       afterData: {
         filename: file.originalname,
         created,
