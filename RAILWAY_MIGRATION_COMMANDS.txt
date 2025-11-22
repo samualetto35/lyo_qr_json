@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════
+🚀 RAILWAY TERMINAL - MİGRATİON KOMUTLARI
+═══════════════════════════════════════════════════════════
+
+Railway Dashboard → Backend Service → Deployments → "..." → "Open Shell"
+
+Terminal açıldığında şu komutu kopyalayıp yapıştırın:
+
+═══════════════════════════════════════════════════════════
+📋 TEK KOMUT (HEPSİNİ ÇALIŞTIRIR):
+═══════════════════════════════════════════════════════════
+
+cd backend && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed
+
+═══════════════════════════════════════════════════════════
+VEYA ADIM ADIM:
+═══════════════════════════════════════════════════════════
+
+# 1. Backend klasörüne git
+cd backend
+
+# 2. Prisma Client generate et
+npx prisma generate
+
+# 3. Migration'ları uygula (TÜM TABLOLARI OLUŞTURUR)
+npx prisma migrate deploy
+
+# 4. Seed data ekle (admin/teacher)
+npm run prisma:seed
+
+═══════════════════════════════════════════════════════════
+✅ BEKLENEN ÇIKTI:
+═══════════════════════════════════════════════════════════
+
+✔ Generated Prisma Client
+✔ Applied migration `20251122154605_init`
+🌱 Seeding database...
+✅ System settings created
+✅ Default admin created: admin@qrattendance.com
+✅ Demo teacher created: teacher@qrattendance.com
+✅ 3 demo students created
+✅ Students enrolled in demo course
+🎉 Database seeding completed successfully!
+
+═══════════════════════════════════════════════════════════
+🎯 MİGRATİON SONRASI:
+═══════════════════════════════════════════════════════════
+
+✅ Tablolar oluşturulacak
+✅ Scheduler hatası kaybolacak
+✅ Backend tam çalışır durumda
+
+═══════════════════════════════════════════════════════════
+

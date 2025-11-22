@@ -109,14 +109,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS
-  // Production: Allow only frontend URL
-  // Development: Allow localhost
-  const allowedOrigins = process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL]
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-      ];
+  // Production: Allow frontend URL (Netlify) and localhost for development
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'https://lyoqr.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ].filter(Boolean); // Remove undefined values
 
   app.enableCors({
     origin: allowedOrigins,

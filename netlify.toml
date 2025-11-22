@@ -1,7 +1,6 @@
 [build]
   base = "frontend"
-  publish = ".next"
-  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/.next"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -9,9 +8,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Next.js plugin handles routing automatically
 

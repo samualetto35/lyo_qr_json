@@ -16,14 +16,14 @@ datasource db {
 // ============================================
 
 model Admin {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  firstName     String?  @map("first_name")
-  lastName      String?  @map("last_name")
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
   importBatches StudentImportBatch[]
@@ -137,30 +137,30 @@ model AttendanceSession {
 }
 
 model AttendanceRecord {
-  id                  String    @id @default(uuid())
-  attendanceSessionId String    @map("attendance_session_id")
-  courseId            String    @map("course_id")
-  studentId           String    @map("student_id_fk")
-  studentIdValue      String    @map("student_id_value") // Snapshot of entered Student ID
-  status              String    // 'present', 'absent', 'manual_present', 'manual_absent', 'flagged'
-  submittedAt         DateTime  @map("submitted_at")
-  submittedVia        String    @map("submitted_via") // 'qr', 'manual'
+  id                   String   @id @default(uuid())
+  attendanceSessionId  String   @map("attendance_session_id")
+  courseId             String   @map("course_id")
+  studentId            String   @map("student_id_fk")
+  studentIdValue       String   @map("student_id_value") // Snapshot of entered Student ID
+  status               String // 'present', 'absent', 'manual_present', 'manual_absent', 'flagged'
+  submittedAt          DateTime @map("submitted_at")
+  submittedVia         String   @map("submitted_via") // 'qr', 'manual'
   submittedByTeacherId String?  @map("submitted_by_teacher_id")
-  clientDeviceId      String?   @map("client_device_id")
-  clientIp            String?   @map("client_ip")
-  clientUserAgent     String?   @map("client_user_agent")
-  clientGeoLat        Decimal?  @map("client_geo_lat") @db.Decimal(10, 8)
-  clientGeoLng        Decimal?  @map("client_geo_lng") @db.Decimal(11, 8)
-  clientGeoAccuracyM  Decimal?  @map("client_geo_accuracy_m") @db.Decimal(10, 2)
-  fraudFlagReason     String?   @map("fraud_flag_reason")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  clientDeviceId       String?  @map("client_device_id")
+  clientIp             String?  @map("client_ip")
+  clientUserAgent      String?  @map("client_user_agent")
+  clientGeoLat         Decimal? @map("client_geo_lat") @db.Decimal(10, 8)
+  clientGeoLng         Decimal? @map("client_geo_lng") @db.Decimal(11, 8)
+  clientGeoAccuracyM   Decimal? @map("client_geo_accuracy_m") @db.Decimal(10, 2)
+  fraudFlagReason      String?  @map("fraud_flag_reason")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   // Relations
-  attendanceSession AttendanceSession @relation(fields: [attendanceSessionId], references: [id])
-  course            Course            @relation(fields: [courseId], references: [id])
-  student           Student           @relation(fields: [studentId], references: [id])
-  submittedByTeacher Teacher?         @relation("ManualAttendanceByTeacher", fields: [submittedByTeacherId], references: [id])
+  attendanceSession  AttendanceSession @relation(fields: [attendanceSessionId], references: [id])
+  course             Course            @relation(fields: [courseId], references: [id])
+  student            Student           @relation(fields: [studentId], references: [id])
+  submittedByTeacher Teacher?          @relation("ManualAttendanceByTeacher", fields: [submittedByTeacherId], references: [id])
 
   @@unique([attendanceSessionId, studentId])
   @@map("attendance_records")
@@ -175,13 +175,13 @@ model StudentImportBatch {
   adminId          String   @map("admin_id")
   courseId         String?  @map("course_id")
   originalFilename String?  @map("original_filename")
-  status           String   // 'uploaded', 'previewed', 'ready_to_commit', 'committed', 'failed', 'cancelled'
+  status           String // 'uploaded', 'previewed', 'ready_to_commit', 'committed', 'failed', 'cancelled'
   importMode       String?  @map("import_mode") // 'add_only', 'add_or_update', 'sync_with_deactivation'
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
-  admin Admin               @relation(fields: [adminId], references: [id])
+  admin  Admin              @relation(fields: [adminId], references: [id])
   course Course?            @relation(fields: [courseId], references: [id])
   rows   StudentImportRow[]
 
@@ -189,22 +189,22 @@ model StudentImportBatch {
 }
 
 model StudentImportRow {
-  id               String   @id @default(uuid())
-  batchId          String   @map("batch_id")
-  rowNumber        Int      @map("row_number")
-  rawStudentId     String   @map("raw_student_id")
-  rawFirstName     String?  @map("raw_first_name")
-  rawLastName      String?  @map("raw_last_name")
-  rawGender        String?  @map("raw_gender")
-  rawProgram       String?  @map("raw_program")
-  parsed           Boolean  @default(false)
-  parsedStudentId  String?  @map("parsed_student_id")
-  parsedFirstName  String?  @map("parsed_first_name")
-  parsedLastName   String?  @map("parsed_last_name")
-  parsedGender     String?  @map("parsed_gender")
-  parsedProgram    String?  @map("parsed_program")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  batchId         String   @map("batch_id")
+  rowNumber       Int      @map("row_number")
+  rawStudentId    String   @map("raw_student_id")
+  rawFirstName    String?  @map("raw_first_name")
+  rawLastName     String?  @map("raw_last_name")
+  rawGender       String?  @map("raw_gender")
+  rawProgram      String?  @map("raw_program")
+  parsed          Boolean  @default(false)
+  parsedStudentId String?  @map("parsed_student_id")
+  parsedFirstName String?  @map("parsed_first_name")
+  parsedLastName  String?  @map("parsed_last_name")
+  parsedGender    String?  @map("parsed_gender")
+  parsedProgram   String?  @map("parsed_program")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
   batch StudentImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
@@ -217,15 +217,15 @@ model StudentImportRow {
 // ============================================
 
 model FraudSignal {
-  id                  String    @id @default(uuid())
-  attendanceSessionId String?   @map("attendance_session_id")
-  courseId            String?   @map("course_id")
-  studentId           String?   @map("student_id_fk")
-  clientDeviceId      String?   @map("client_device_id")
-  clientIp            String?   @map("client_ip")
-  signalType          String    @map("signal_type") // 'multiple_ids_same_device', 'too_many_requests_same_ip', 'outside_geofence', 'session_expired_submission', 'other'
+  id                  String   @id @default(uuid())
+  attendanceSessionId String?  @map("attendance_session_id")
+  courseId            String?  @map("course_id")
+  studentId           String?  @map("student_id_fk")
+  clientDeviceId      String?  @map("client_device_id")
+  clientIp            String?  @map("client_ip")
+  signalType          String   @map("signal_type") // 'multiple_ids_same_device', 'too_many_requests_same_ip', 'outside_geofence', 'session_expired_submission', 'other'
   details             String
-  createdAt           DateTime  @default(now()) @map("created_at")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   // Relations
   attendanceSession AttendanceSession? @relation(fields: [attendanceSessionId], references: [id])
@@ -240,19 +240,19 @@ model FraudSignal {
 // ============================================
 
 model SystemSettings {
-  id                                 String   @id @default(uuid())
-  maxSessionDurationMinutes          Int      @map("max_session_duration_minutes")
-  minSessionDurationMinutes          Int      @map("min_session_duration_minutes")
-  maxSubmissionsPerDevicePerSession  Int      @map("max_submissions_per_device_per_session")
-  maxSubmissionsPerIpPerSession      Int      @map("max_submissions_per_ip_per_session")
-  geofenceEnabled                    Boolean  @default(false) @map("geofence_enabled")
-  geofenceCenterLat                  Decimal? @map("geofence_center_lat") @db.Decimal(10, 8)
-  geofenceCenterLng                  Decimal? @map("geofence_center_lng") @db.Decimal(11, 8)
-  geofenceRadiusMeters               Decimal? @map("geofence_radius_meters") @db.Decimal(10, 2)
-  geoRequired                        Boolean  @default(false) @map("geo_required")
-  offlineRetriesAllowed              Int      @map("offline_retries_allowed")
-  createdAt                          DateTime @default(now()) @map("created_at")
-  updatedAt                          DateTime @updatedAt @map("updated_at")
+  id                                String   @id @default(uuid())
+  maxSessionDurationMinutes         Int      @map("max_session_duration_minutes")
+  minSessionDurationMinutes         Int      @map("min_session_duration_minutes")
+  maxSubmissionsPerDevicePerSession Int      @map("max_submissions_per_device_per_session")
+  maxSubmissionsPerIpPerSession     Int      @map("max_submissions_per_ip_per_session")
+  geofenceEnabled                   Boolean  @default(false) @map("geofence_enabled")
+  geofenceCenterLat                 Decimal? @map("geofence_center_lat") @db.Decimal(10, 8)
+  geofenceCenterLng                 Decimal? @map("geofence_center_lng") @db.Decimal(11, 8)
+  geofenceRadiusMeters              Decimal? @map("geofence_radius_meters") @db.Decimal(10, 2)
+  geoRequired                       Boolean  @default(false) @map("geo_required")
+  offlineRetriesAllowed             Int      @map("offline_retries_allowed")
+  createdAt                         DateTime @default(now()) @map("created_at")
+  updatedAt                         DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
 }
@@ -265,7 +265,7 @@ model AuditLog {
   id         String   @id @default(uuid())
   actorType  String   @map("actor_type") // 'admin', 'teacher', 'system'
   actorId    String?  @map("actor_id") // No foreign key - just stores the ID as a string
-  action     String   // 'CREATE_TEACHER', 'IMPORT_STUDENTS', 'UPDATE_ATTENDANCE', etc.
+  action     String // 'CREATE_TEACHER', 'IMPORT_STUDENTS', 'UPDATE_ATTENDANCE', etc.
   entityType String   @map("entity_type") // 'teacher', 'course', 'student', etc.
   entityId   String?  @map("entity_id")
   beforeData Json?    @map("before_data")
@@ -274,4 +274,3 @@ model AuditLog {
 
   @@map("audit_logs")
 }
-
