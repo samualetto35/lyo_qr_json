@@ -5,7 +5,7 @@
   "scripts": {
     "build": "cd backend && npm ci && npm run build && npx prisma generate && npx prisma migrate deploy || true",
     "build:with-migration": "cd backend && npm ci && npm run build && npx prisma generate && npx prisma migrate deploy",
-    "start": "cd backend && npm run start:prod",
+    "start": "cd backend && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed && npm run start:prod",
     "start:prod": "cd backend && npm run start:prod",
     "migrate:deploy": "cd backend && npm run prisma:migrate:deploy",
     "db:push": "cd backend && npm run prisma:db:push",
