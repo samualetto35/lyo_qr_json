@@ -41,6 +41,6 @@ lerna-debug.log*
 .env.*.local
 
 # Prisma
-prisma/migrations/*
+# prisma/migrations/* - Commented out: We need migrations in production
 !prisma/migrations/.gitkeep
 
