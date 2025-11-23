@@ -48,7 +48,7 @@ export default function DoctorStudentsPage() {
     <div className={`min-h-screen ${theme === 'd2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
       {/* Header */}
       <header className={theme === 'd2' ? 'bg-transparent' : 'bg-white shadow'}>
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
+        <div className={`${theme === 'd2' ? 'max-w-5xl' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>

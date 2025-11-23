@@ -75,9 +75,6 @@ export default function NewReportPage() {
 
   if (!mounted || !user) return null
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0]
-
   const studentOptions =
     students?.data?.map((student: any) => ({
       value: student.student_id,
@@ -88,7 +85,7 @@ export default function NewReportPage() {
     <div className={`min-h-screen ${theme === 'd2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
       {/* Header */}
       <header className={theme === 'd2' ? 'bg-transparent' : 'bg-white shadow'}>
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
+        <div className={`${theme === 'd2' ? 'max-w-5xl' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
@@ -186,14 +183,12 @@ export default function NewReportPage() {
                     <Calendar
                       value={reportDate}
                       onChange={setReportDate}
-                      maxDate={today}
                     />
                   ) : (
                     <input
                       type="date"
                       value={reportDate}
                       onChange={(e) => setReportDate(e.target.value)}
-                      max={today}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                       style={{ fontSize: '16px' }}
