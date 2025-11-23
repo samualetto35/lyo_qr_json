@@ -102,12 +102,18 @@ export default function TeacherLoginPage() {
             </Button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <Link
               href="/login/admin"
-              className="text-sm text-primary-600 hover:text-primary-500"
+              className="text-sm text-primary-600 hover:text-primary-500 block"
             >
               Login as Admin instead
+            </Link>
+            <Link
+              href="/login/doctor"
+              className="text-sm text-primary-600 hover:text-primary-500 block"
+            >
+              Login as Doctor instead
             </Link>
           </div>
         </form>

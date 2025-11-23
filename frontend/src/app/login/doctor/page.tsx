@@ -100,6 +100,21 @@ export default function DoctorLoginPage() {
               {isLoading ? 'Signing in...' : 'Sign in as Doctor'}
             </Button>
           </div>
+
+          <div className="text-center space-y-2">
+            <Link
+              href="/login/admin"
+              className="text-sm text-primary-600 hover:text-primary-500 block"
+            >
+              Login as Admin instead
+            </Link>
+            <Link
+              href="/login/teacher"
+              className="text-sm text-primary-600 hover:text-primary-500 block"
+            >
+              Login as Teacher instead
+            </Link>
+          </div>
         </form>
       </div>
     </div>
