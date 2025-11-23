@@ -83,14 +83,19 @@ export default function DoctorDashboardPage() {
           <div className="space-y-6 max-w-5xl mx-auto">
             {/* Main Hero Card - New Report */}
             <Link href="/doctor/reports/new">
-              <div className="group relative overflow-hidden bg-[#E3E3E3] rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
-                {/* Placeholder Image Area */}
-                <div className="w-full h-[280px] sm:h-[360px] bg-[#E3E3E3]"></div>
+              <div className="group relative overflow-hidden rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
+                {/* Background Image */}
+                <div 
+                  className="w-full h-[280px] sm:h-[360px] bg-cover bg-center"
+                  style={{
+                    backgroundImage: 'url(/Gemini_Generated_Image_qwbv4yqwbv4yqwbv.png)'
+                  }}
+                ></div>
                 
                 {/* Gradient Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
                   <h2 className="text-[18px] sm:text-[20px] font-semibold text-white mb-2">
-                    Öğrenci Ekle +
+                    Rapor Ekle +
                   </h2>
                   <p className="text-[13px] sm:text-[14px] text-white/70 leading-relaxed max-w-2xl">
                     Kayıtlı öğrenciyi ve tarihi seçerek veri tabanına yeni rapor ekleyin
