@@ -77,7 +77,7 @@ export default function TeacherLoginPage() {
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
           )}
         </div>
-        <div>
+        <div className={theme === 'l2' ? 'mt-4' : ''}>
           <label htmlFor="password" className="sr-only">
             Password
           </label>
