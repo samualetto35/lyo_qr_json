@@ -8,6 +8,10 @@ import * as z from 'zod'
 import Link from 'next/link'
 import { authService } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { useUITheme } from '@/contexts/ui-theme.context'
+import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { LoginL1 } from '@/components/login/login-l1'
+import { LoginL2 } from '@/components/login/login-l2'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>
 
 export default function DoctorLoginPage() {
   const router = useRouter()
+  const { theme } = useUITheme()
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -42,82 +47,95 @@ export default function DoctorLoginPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Doctor Login
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Medical Report Portal
-          </p>
+  const formContent = (
+    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-800">{error}</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
+      )}
+
+      <div className={theme === 'l2' ? 'space-y-4' : 'rounded-md shadow-sm -space-y-px'}>
+        <div>
+          <label htmlFor="email" className="sr-only">
+            Email address
+          </label>
+          <input
+            {...register('email')}
+            id="email"
+            type="email"
+            autoComplete="email"
+            className={`appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 ${
+              theme === 'l2'
+                ? 'rounded-lg text-base'
+                : 'rounded-none rounded-t-md sm:text-sm'
+            }`}
+            placeholder="Email address"
+            style={{ fontSize: '16px' }}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
           )}
-
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                {...register('email')}
-                id="email"
-                type="email"
-                autoComplete="email"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                {...register('password')}
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? 'Signing in...' : 'Sign in as Doctor'}
-            </Button>
-          </div>
-
-          <div className="text-center space-y-2">
-            <Link
-              href="/login/admin"
-              className="text-sm text-primary-600 hover:text-primary-500 block"
-            >
-              Login as Admin instead
-            </Link>
-            <Link
-              href="/login/teacher"
-              className="text-sm text-primary-600 hover:text-primary-500 block"
-            >
-              Login as Teacher instead
-            </Link>
-          </div>
-        </form>
+        </div>
+        <div>
+          <label htmlFor="password" className="sr-only">
+            Password
+          </label>
+          <input
+            {...register('password')}
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            className={`appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 ${
+              theme === 'l2'
+                ? 'rounded-lg text-base'
+                : 'rounded-none rounded-b-md sm:text-sm'
+            }`}
+            placeholder="Password"
+            style={{ fontSize: '16px' }}
+          />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <div>
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? 'Signing in...' : 'Sign in as Doctor'}
+        </Button>
+      </div>
+
+      <div className="text-center space-y-2">
+        <Link
+          href="/login/admin"
+          className="text-sm text-primary-600 hover:text-primary-500 block"
+        >
+          Login as Admin instead
+        </Link>
+        <Link
+          href="/login/teacher"
+          className="text-sm text-primary-600 hover:text-primary-500 block"
+        >
+          Login as Teacher instead
+        </Link>
+      </div>
+    </form>
+  )
+
+  return (
+    <>
+      <ThemeSwitcher />
+      {theme === 'l1' ? (
+        <LoginL1 title="Doctor Login" subtitle="Medical Report Portal">
+          <div className="mt-8">{formContent}</div>
+        </LoginL1>
+      ) : (
+        <LoginL2 title="Doctor Login" subtitle="Medical Report Portal">
+          {formContent}
+        </LoginL2>
+      )}
+    </>
   )
 }
 
