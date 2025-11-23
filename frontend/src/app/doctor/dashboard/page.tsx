@@ -42,7 +42,7 @@ export default function DoctorDashboardPage() {
     <div className={`min-h-screen ${theme === 'd2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
       {/* Header */}
       <header className={theme === 'd2' ? 'bg-transparent' : 'bg-white shadow'}>
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
+        <div className={`${theme === 'd2' ? 'max-w-5xl' : 'max-w-7xl'} mx-auto ${theme === 'd2' ? 'px-4 sm:px-6 lg:px-8' : 'px-4 sm:px-6 lg:px-8'} ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
@@ -93,7 +93,7 @@ export default function DoctorDashboardPage() {
                 ></div>
                 
                 {/* Gradient Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-8 sm:pt-10 px-6 sm:px-8">
+                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-8 px-6 sm:p-8">
                   <h2 className="text-[18px] sm:text-[20px] font-semibold text-white mb-2">
                     Rapor Ekle +
                   </h2>
@@ -118,7 +118,7 @@ export default function DoctorDashboardPage() {
                   ></div>
                   
                   {/* Gradient Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-6 sm:pt-7 px-6 sm:px-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-6 px-6 sm:p-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Raporlar
                     </h3>
@@ -141,7 +141,7 @@ export default function DoctorDashboardPage() {
                   ></div>
                   
                   {/* Gradient Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-6 sm:pt-7 px-6 sm:px-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-6 px-6 sm:p-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Öğrenciler
                     </h3>
