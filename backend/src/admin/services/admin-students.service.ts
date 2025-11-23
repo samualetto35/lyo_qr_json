@@ -72,6 +72,7 @@ export class AdminStudentsService {
               status: true,
               attendanceSession: {
                 select: {
+                  id: true,
                   courseId: true,
                 },
               },
@@ -81,6 +82,28 @@ export class AdminStudentsService {
       }),
       this.prisma.student.count({ where }),
     ]);
+
+    // Get all medical reports for these students
+    const studentIds = students.map(s => s.id);
+    const allMedicalReports = await this.prisma.medicalReport.findMany({
+      where: {
+        studentId: { in: studentIds },
+      },
+      select: {
+        studentId: true,
+        reportDate: true,
+      },
+    });
+
+    // Group medical reports by student and date
+    const medicalReportsByStudent = new Map<string, Set<string>>();
+    for (const report of allMedicalReports) {
+      const dateStr = report.reportDate.toISOString().split('T')[0];
+      if (!medicalReportsByStudent.has(report.studentId)) {
+        medicalReportsByStudent.set(report.studentId, new Set());
+      }
+      medicalReportsByStudent.get(report.studentId)!.add(dateStr);
+    }
 
     // Format response with attendance stats per course
     const formattedStudents = await Promise.all(
@@ -98,13 +121,41 @@ export class AdminStudentsService {
               },
             });
 
+            // Get all closed sessions for this course
+            const courseSessions = await this.prisma.attendanceSession.findMany({
+              where: {
+                courseId,
+                isOpen: false,
+              },
+              select: {
+                id: true,
+                sessionDate: true,
+              },
+            });
+
             // Get student's attendance records for this course
             const studentAttendance = student.attendanceRecords.filter(
               (record) => record.attendanceSession.courseId === courseId,
             );
 
             const presentCount = studentAttendance.length;
-            const absentCount = Math.max(0, totalSessions - presentCount);
+            const presentSessionIds = new Set(studentAttendance.map(r => r.attendanceSession.id));
+            
+            // Calculate absent vs medical report counts
+            const studentMedicalReports = medicalReportsByStudent.get(student.id) || new Set();
+            let absentCount = 0;
+            let medicalReportCount = 0;
+
+            for (const session of courseSessions) {
+              if (!presentSessionIds.has(session.id)) {
+                const sessionDateStr = session.sessionDate.toISOString().split('T')[0];
+                if (studentMedicalReports.has(sessionDateStr)) {
+                  medicalReportCount++;
+                } else {
+                  absentCount++;
+                }
+              }
+            }
 
             return {
               course_id: courseId,
@@ -113,6 +164,7 @@ export class AdminStudentsService {
               total_sessions: totalSessions,
               present_count: presentCount,
               absent_count: absentCount,
+              medical_report_count: medicalReportCount,
               attendance_rate:
                 totalSessions > 0
                   ? Math.round((presentCount / totalSessions) * 100)
@@ -224,18 +276,24 @@ export class AdminStudentsService {
       },
     });
 
-    // Get medical reports for this student (by studentId)
-    const healthSystemStudent = await this.prisma.healthSystemStudent.findUnique({
-      where: { studentId: student.studentId },
+    // Get medical reports for this student
+    const medicalReports = await this.prisma.medicalReport.findMany({
+      where: { studentId: student.id },
       include: {
-        medicalReports: true,
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
+      orderBy: { reportDate: 'desc' },
     });
 
     const medicalReportDates = new Set(
-      healthSystemStudent?.medicalReports.map(r => 
+      medicalReports.map(r => 
         r.reportDate.toISOString().split('T')[0]
-      ) || []
+      )
     );
 
     // Group attendance by course
@@ -320,6 +378,14 @@ export class AdminStudentsService {
       gender: student.gender,
       program: student.program,
       courses: Array.from(courseStats.values()),
+      medical_reports: medicalReports.map(r => ({
+        id: r.id,
+        report_date: r.reportDate,
+        doctor_name: r.doctor.firstName && r.doctor.lastName 
+          ? `${r.doctor.firstName} ${r.doctor.lastName}` 
+          : 'Unknown',
+        created_at: r.createdAt,
+      })),
     };
   }
 

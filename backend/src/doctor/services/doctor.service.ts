@@ -7,13 +7,13 @@ export class DoctorService {
   constructor(private prisma: PrismaService) {}
 
   async createReport(dto: CreateMedicalReportDto, doctorId: string) {
-    // Find health system student
-    const student = await this.prisma.healthSystemStudent.findUnique({
+    // Find student
+    const student = await this.prisma.student.findUnique({
       where: { studentId: dto.student_id },
     });
 
     if (!student) {
-      throw new NotFoundException(`Student with ID ${dto.student_id} not found in health system`);
+      throw new NotFoundException(`Student with ID ${dto.student_id} not found`);
     }
 
     // Check if report already exists for this date
@@ -54,7 +54,7 @@ export class DoctorService {
     const where: any = { doctorId };
 
     if (dto.student_id) {
-      const student = await this.prisma.healthSystemStudent.findUnique({
+      const student = await this.prisma.student.findUnique({
         where: { studentId: dto.student_id },
       });
       if (student) {
@@ -104,18 +104,21 @@ export class DoctorService {
 
   async getStudents(page = 1, pageSize = 20, search?: string) {
     const skip = (page - 1) * pageSize;
-    const where = search
-      ? {
-          OR: [
-            { studentId: { contains: search, mode: 'insensitive' as const } },
-            { firstName: { contains: search, mode: 'insensitive' as const } },
-            { lastName: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {};
+    const where: any = {
+      isActive: true,
+      ...(search
+        ? {
+            OR: [
+              { studentId: { contains: search, mode: 'insensitive' as const } },
+              { firstName: { contains: search, mode: 'insensitive' as const } },
+              { lastName: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
 
     const [students, total] = await Promise.all([
-      this.prisma.healthSystemStudent.findMany({
+      this.prisma.student.findMany({
         where,
         skip,
         take: pageSize,
@@ -126,7 +129,7 @@ export class DoctorService {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.healthSystemStudent.count({ where }),
+      this.prisma.student.count({ where }),
     ]);
 
     return {

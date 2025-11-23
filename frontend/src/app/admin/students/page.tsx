@@ -222,7 +222,11 @@ export default function AdminStudentsPage() {
                     }
                     
                     return (
-                    <tr key={student.id} className={rowBgClass}>
+                    <tr 
+                      key={student.id} 
+                      className={`${rowBgClass} cursor-pointer`}
+                      onClick={() => router.push(`/admin/students/${student.id}`)}
+                    >
                       <td className="px-6 py-4 text-sm font-mono font-medium text-gray-900">
                         {student.student_id}
                       </td>
