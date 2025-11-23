@@ -67,7 +67,7 @@ export default function DoctorDashboardPage() {
             <button
               onClick={handleLogout}
               className={theme === 'd2' 
-                ? 'px-3 py-1.5 text-xs font-normal text-gray-700 bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
+                ? 'px-3 py-1.5 text-xs font-normal text-[#D96A6A] bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
                 : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900'
               }
             >
@@ -78,7 +78,7 @@ export default function DoctorDashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-12 sm:py-16' : 'py-8'}`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'pt-0 pb-12 sm:pb-16' : 'py-8'}`}>
         {theme === 'd2' ? (
           <div className="space-y-6 max-w-5xl mx-auto">
             {/* Main Hero Card - New Report */}
