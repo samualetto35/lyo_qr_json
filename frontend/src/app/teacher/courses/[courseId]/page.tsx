@@ -41,6 +41,15 @@ export default function TeacherCourseDetailPage() {
     enabled: !!courseId && activeTab === 'students' && !!user,
   })
 
+  const { data: attendanceHistory, isLoading: attendanceLoading } = useQuery({
+    queryKey: ['teacher-course-attendance', courseId],
+    queryFn: async () => {
+      const response = await api.get(`/teacher/courses/${courseId}/attendance`)
+      return response.data
+    },
+    enabled: !!courseId && activeTab === 'attendance' && !!user,
+  })
+
   const handleLogout = () => {
     authService.logout()
     router.push('/login/teacher')
@@ -206,15 +215,71 @@ export default function TeacherCourseDetailPage() {
             )}
 
             {activeTab === 'attendance' && (
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">
-                  {theme === 't2' ? 'Bu ders için yoklama geçmişini görüntüleyin' : 'View attendance history for this course'}
-                </p>
-                <Link href={`/teacher/courses/${courseId}/attendance`}>
-                  <Button className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}>
-                    {theme === 't2' ? 'Yoklamaya Git' : 'Go to Attendance'}
-                  </Button>
-                </Link>
+              <div>
+                {attendanceLoading ? (
+                  <div className="text-center py-8">{theme === 't2' ? 'Yükleniyor...' : 'Loading...'}</div>
+                ) : attendanceHistory && attendanceHistory.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    {theme === 't2' ? 'Henüz yoklama oturumu yok.' : 'No attendance sessions yet.'}
+                    <p className="text-sm mt-2">
+                      {theme === 't2' ? 'İlk yoklama oturumunu başlatmak için yukarıdaki butona tıklayın.' : 'Click the button above to start your first attendance session.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            {theme === 't2' ? 'Oturum Adı' : 'Session Name'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            {theme === 't2' ? 'Tarih' : 'Date'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            {theme === 't2' ? 'Durum' : 'Status'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            {theme === 't2' ? 'Mevcut/Toplam' : 'Present/Total'}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            {theme === 't2' ? 'İşlemler' : 'Actions'}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {attendanceHistory?.map((session: any) => (
+                          <tr key={session.session_id}>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {session.session_name || (theme === 't2' ? 'İsimsiz Oturum' : 'Untitled Session')}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {new Date(session.session_date).toLocaleDateString('tr-TR')}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 text-xs font-semibold rounded-full ${
+                                session.is_open ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {session.is_open ? (theme === 't2' ? 'Açık' : 'Open') : (theme === 't2' ? 'Kapalı' : 'Closed')}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {session.present_count} / {session.total_students}
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <Link
+                                href={`/teacher/attendance-sessions/${session.session_id}`}
+                                className="text-primary-600 hover:text-primary-900"
+                              >
+                                {theme === 't2' ? 'Detayları Görüntüle' : 'View Details'}
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -118,19 +118,31 @@ export default function TeacherCoursesPage() {
           </Link>
         )}
 
-        {/* Title */}
-        <h2 className={`${theme === 't2' ? 'text-[28px] font-semibold text-gray-900 mb-6' : 'text-2xl font-bold text-gray-900 mb-6'}`}>
-          {theme === 't2' ? 'Derslerim' : 'My Courses'}
-        </h2>
-
-        <div className={`mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
-          <p className={`${theme === 't2' ? 'text-gray-700' : 'text-gray-600'}`}>
-            {theme === 't2' ? 'Derslerinizi yönetin ve yoklama oturumları başlatın' : 'Manage your courses and start attendance sessions'}
-          </p>
-          <Button onClick={() => setShowModal(true)} className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}>
-            {theme === 't2' ? 'Yeni Ders Oluştur' : 'Create New Course'}
-          </Button>
+        {/* Title and Create Button */}
+        <div className={`${theme === 't2' ? 'mb-4' : 'mb-6'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
+          <h2 className={`${theme === 't2' ? 'text-[28px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
+            {theme === 't2' ? 'Derslerim' : 'My Courses'}
+          </h2>
+          {theme === 't2' && (
+            <Button 
+              onClick={() => setShowModal(true)} 
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-full"
+            >
+              {theme === 't2' ? 'Yeni Ders Oluştur' : 'Create New Course'}
+            </Button>
+          )}
         </div>
+
+        {theme !== 't2' && (
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <p className="text-gray-600">
+              Manage your courses and start attendance sessions
+            </p>
+            <Button onClick={() => setShowModal(true)}>
+              Create New Course
+            </Button>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="text-center py-12">{theme === 't2' ? 'Yükleniyor...' : 'Loading...'}</div>
@@ -165,7 +177,7 @@ export default function TeacherCoursesPage() {
                       </Button>
                     </Link>
                     <Link href={`/teacher/courses/${course.id}/attendance`}>
-                      <Button className={`w-full ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}`}>
+                      <Button className={`w-full ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''} mt-2`}>
                         {theme === 't2' ? 'Yoklama Başlat' : 'Start Attendance'}
                       </Button>
                     </Link>

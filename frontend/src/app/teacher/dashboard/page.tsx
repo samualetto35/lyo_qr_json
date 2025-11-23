@@ -116,7 +116,7 @@ export default function TeacherDashboardPage() {
                 ></div>
 
                 {/* Gradient Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-8 px-6 sm:p-8">
+                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-3 pt-8 px-6 sm:pb-4 sm:p-8">
                   <h2 className="text-[18px] sm:text-[20px] font-semibold text-white mb-2">
                     Derslerim
                   </h2>
@@ -136,7 +136,7 @@ export default function TeacherDashboardPage() {
                     className="w-full h-[180px] bg-cover bg-center"
                     style={{ backgroundImage: 'url(/a_sleek_action-oriented_ui_button_background_for_a_start_attendance_session_feature_in_a_school_man_bs8phopy1q8sf1wk7zqr_1.png)' }}
                   ></div>
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-6 px-6 sm:p-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-3 pt-6 px-6 sm:pb-4 sm:p-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Yoklama Başlat
                     </h3>
@@ -154,7 +154,7 @@ export default function TeacherDashboardPage() {
                     className="w-full h-[180px] bg-cover bg-center"
                     style={{ backgroundImage: 'url(/a_sleek_minimal_ui_button_background_representing_profile_for_an_educational_or_admin_dashboard_inc_eypp2nbtptjfv8vi7v5v_2.png)' }}
                   ></div>
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-5 pt-6 px-6 sm:p-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end pb-3 pt-6 px-6 sm:pb-4 sm:p-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Profil
                     </h3>
