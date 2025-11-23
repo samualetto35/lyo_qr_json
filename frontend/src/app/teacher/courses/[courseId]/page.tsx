@@ -41,6 +41,11 @@ export default function TeacherCourseDetailPage() {
     enabled: !!courseId && activeTab === 'students' && !!user,
   })
 
+  const handleLogout = () => {
+    authService.logout()
+    router.push('/login/teacher')
+  }
+
   if (!mounted || !user) return null
 
   return (
@@ -70,7 +75,7 @@ export default function TeacherCourseDetailPage() {
               <TeacherThemeSwitcher />
             </div>
             <button
-              onClick={() => authService.logout(); router.push('/login/teacher')}
+              onClick={handleLogout}
               className={theme === 't2' 
                 ? 'px-3 py-1.5 text-xs font-normal text-[#D96A6A] bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
                 : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900'
