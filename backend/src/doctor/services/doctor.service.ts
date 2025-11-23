@@ -53,7 +53,25 @@ export class DoctorService {
   async getReports(dto: GetReportsDto, doctorId: string) {
     const where: any = { doctorId };
 
-    if (dto.student_id) {
+    // Support both old student_id (exact match) and new search (partial match)
+    if (dto.search) {
+      // Search in student ID or name (partial match, case-insensitive)
+      const students = await this.prisma.student.findMany({
+        where: {
+          OR: [
+            { studentId: { contains: dto.search, mode: 'insensitive' } },
+            { firstName: { contains: dto.search, mode: 'insensitive' } },
+            { lastName: { contains: dto.search, mode: 'insensitive' } },
+          ],
+        },
+      });
+      if (students.length > 0) {
+        where.studentId = { in: students.map((s) => s.id) };
+      } else {
+        return { data: [], meta: { total: 0, page: 1, pageSize: 20, totalPages: 0 } };
+      }
+    } else if (dto.student_id) {
+      // Legacy support: exact match by student_id
       const student = await this.prisma.student.findUnique({
         where: { studentId: dto.student_id },
       });

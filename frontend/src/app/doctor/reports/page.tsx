@@ -18,7 +18,7 @@ export default function ReportsPage() {
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [filters, setFilters] = useState({
-    student_id: '',
+    search: '',
     start_date: '',
     end_date: '',
   })
@@ -37,7 +37,7 @@ export default function ReportsPage() {
     queryKey: ['doctor-reports', filters],
     queryFn: async () => {
       const params: any = {}
-      if (filters.student_id) params.student_id = filters.student_id
+      if (filters.search) params.search = filters.search
       if (filters.start_date) params.start_date = filters.start_date
       if (filters.end_date) params.end_date = filters.end_date
       const response = await api.get('/doctor/reports', { params })
@@ -133,13 +133,13 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className={`block ${theme === 'd2' ? 'text-sm font-medium text-gray-700 mb-2' : 'text-sm font-medium text-gray-700 mb-2'}`}>
-                {theme === 'd2' ? 'Öğrenci ID' : 'Student ID'}
+                {theme === 'd2' ? 'Öğrenci Ara' : 'Search Student'}
               </label>
               <input
                 type="text"
-                value={filters.student_id}
-                onChange={(e) => setFilters({ ...filters, student_id: e.target.value })}
-                placeholder={theme === 'd2' ? 'Öğrenci ID ile ara...' : 'Search by student ID...'}
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                placeholder={theme === 'd2' ? 'ID veya isim ile ara...' : 'Search by ID or name...'}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                 style={{ fontSize: '16px' }}
               />

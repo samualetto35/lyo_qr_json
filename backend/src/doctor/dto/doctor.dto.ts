@@ -14,6 +14,10 @@ export class GetReportsDto {
   student_id?: string;
 
   @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
   @IsDateString()
   start_date?: string;
 
