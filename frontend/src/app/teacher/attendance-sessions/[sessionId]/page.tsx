@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { useTeacherTheme } from '@/contexts/teacher-theme.context'
+import { TeacherThemeSwitcher } from '@/components/ui/teacher-theme-switcher'
 import Link from 'next/link'
 import { formatDateTime } from '@/lib/utils'
 import QRCode from 'qrcode.react'
@@ -15,6 +17,7 @@ export default function TeacherAttendanceSessionDetailPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
   const queryClient = useQueryClient()
+  const { theme } = useTeacherTheme()
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
@@ -109,54 +112,98 @@ export default function TeacherAttendanceSessionDetailPage() {
   const qrUrl = session?.is_open ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/attendance/qr?session_id=${sessionId}&token=${session.qr_token}` : null
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-primary-600 hover:text-primary-700">
-              ← Back
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">Attendance Session</h1>
+    <div className={`min-h-screen ${theme === 't2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
+      {/* Header */}
+      <header className={theme === 't2' ? 'bg-transparent' : 'bg-white shadow'}>
+        <div className={`${theme === 't2' ? 'max-w-5xl' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 ${theme === 't2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className={`${theme === 't2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
+                {theme === 't2' ? 'Akademisyen Portalı' : 'Teacher Dashboard'}
+              </h1>
+              <div className="hidden md:block">
+                <TeacherThemeSwitcher />
+              </div>
+            </div>
+            <p className={`${theme === 't2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
+              {theme === 't2' ? (
+                <>Hoşgeldiniz, {user.first_name || 'Öğretmen'} {user.last_name || ''}</>
+              ) : (
+                <>Welcome, {user.first_name || 'Teacher'} {user.last_name || ''}</>
+              )}
+            </p>
           </div>
-          <button onClick={handleLogout} className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900">
-            Logout
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="md:hidden">
+              <TeacherThemeSwitcher />
+            </div>
+            <button
+              onClick={handleLogout}
+              className={theme === 't2' 
+                ? 'px-3 py-1.5 text-xs font-normal text-[#D96A6A] bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
+                : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900'
+              }
+            >
+              {theme === 't2' ? 'Çıkış Yap' : 'Logout'}
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 't2' ? 'pt-4 pb-12 sm:pb-16' : 'py-8'}`}>
+        {/* Back Button */}
+        {theme === 't2' && (
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Geri Git
+          </button>
+        )}
+
+        {/* Title */}
+        <h2 className={`${theme === 't2' ? 'text-[28px] font-semibold text-gray-900 mb-6' : 'text-2xl font-bold text-gray-900 mb-6'}`}>
+          {theme === 't2' ? 'Yoklama Oturumu' : 'Attendance Session'}
+        </h2>
+
         {isLoading ? (
-          <div className="text-center py-12">Loading...</div>
+          <div className="text-center py-12">{theme === 't2' ? 'Yükleniyor...' : 'Loading...'}</div>
         ) : (
           <>
             {/* Session Info & QR Code */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Session Details */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold mb-4">Session Information</h2>
+              <div className={`${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)]' : 'bg-white rounded-lg shadow'} p-6`}>
+                <h2 className="text-lg font-semibold mb-4">
+                  {theme === 't2' ? 'Oturum Bilgileri' : 'Session Information'}
+                </h2>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Course:</span>
+                    <span className="text-gray-500">{theme === 't2' ? 'Ders:' : 'Course:'}</span>
                     <span className="font-medium">{session?.course.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Session:</span>
-                    <span className="font-medium">{session?.session_name || 'Untitled'}</span>
+                    <span className="text-gray-500">{theme === 't2' ? 'Oturum:' : 'Session:'}</span>
+                    <span className="font-medium">{session?.session_name || (theme === 't2' ? 'İsimsiz' : 'Untitled')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Date:</span>
+                    <span className="text-gray-500">{theme === 't2' ? 'Tarih:' : 'Date:'}</span>
                     <span className="font-medium">{session?.session_date}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Status:</span>
+                    <span className="text-gray-500">{theme === 't2' ? 'Durum:' : 'Status:'}</span>
                     <span className={`px-2 py-1 text-xs font-semibold rounded ${
                       session?.is_open ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {session?.is_open ? 'Open' : 'Closed'}
+                      {session?.is_open ? (theme === 't2' ? 'Açık' : 'Open') : (theme === 't2' ? 'Kapalı' : 'Closed')}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Submissions:</span>
+                    <span className="text-gray-500">{theme === 't2' ? 'Gönderimler:' : 'Submissions:'}</span>
                     <span className="font-medium">{records.length}</span>
                   </div>
                 </div>
@@ -169,7 +216,9 @@ export default function TeacherAttendanceSessionDetailPage() {
                       variant="destructive"
                       className="w-full"
                     >
-                      {closeSessionMutation.isPending ? 'Closing...' : 'Close Session'}
+                      {closeSessionMutation.isPending 
+                        ? (theme === 't2' ? 'Kapatılıyor...' : 'Closing...')
+                        : (theme === 't2' ? 'Oturumu Kapat' : 'Close Session')}
                     </Button>
                   </div>
                 )}
@@ -177,14 +226,16 @@ export default function TeacherAttendanceSessionDetailPage() {
 
               {/* QR Code */}
               {session?.is_open && qrUrl ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold mb-4">QR Code for Students</h2>
+                <div className={`${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)]' : 'bg-white rounded-lg shadow'} p-6`}>
+                  <h2 className="text-lg font-semibold mb-4">
+                    {theme === 't2' ? 'Öğrenciler İçin QR Kod' : 'QR Code for Students'}
+                  </h2>
                   <div className="flex flex-col items-center">
                     <div className="bg-white p-4 rounded-lg border-4 border-primary-600">
                       <QRCode value={qrUrl} size={256} />
                     </div>
                     <p className="text-sm text-gray-600 mt-4 text-center">
-                      Students should scan this QR code to mark their attendance
+                      {theme === 't2' ? 'Öğrenciler yoklamalarını işaretlemek için bu QR kodu taramalıdır' : 'Students should scan this QR code to mark their attendance'}
                     </p>
                     <div className="mt-4 w-full">
                       <input
@@ -192,44 +243,52 @@ export default function TeacherAttendanceSessionDetailPage() {
                         value={qrUrl}
                         readOnly
                         className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md bg-gray-50"
+                        style={{ fontSize: '16px' }}
                         onClick={(e) => e.currentTarget.select()}
                       />
                       <p className="text-xs text-gray-500 mt-1 text-center">
-                        Click to copy the link
+                        {theme === 't2' ? 'Linki kopyalamak için tıklayın' : 'Click to copy the link'}
                       </p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                <div className={`${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)]' : 'bg-white rounded-lg shadow'} p-6 flex items-center justify-center`}>
                   <div className="text-center text-gray-500">
-                    <p className="font-medium">Session Closed</p>
-                    <p className="text-sm mt-2">QR code is no longer available</p>
+                    <p className="font-medium">{theme === 't2' ? 'Oturum Kapalı' : 'Session Closed'}</p>
+                    <p className="text-sm mt-2">
+                      {theme === 't2' ? 'QR kod artık mevcut değil' : 'QR code is no longer available'}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Attendance Records */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Attendance Records ({records.length})</h2>
+            <div className={`${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)]' : 'bg-white rounded-lg shadow'} overflow-hidden`}>
+              <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h2 className="text-lg font-semibold">
+                  {theme === 't2' ? 'Yoklama Kayıtları' : 'Attendance Records'} ({records.length})
+                </h2>
                 <div className="flex items-center gap-3">
                   {session?.is_open && (
-                    <span className="text-sm text-green-600 animate-pulse">● Live Updates</span>
+                    <span className="text-sm text-green-600 animate-pulse">
+                      {theme === 't2' ? '● Canlı Güncellemeler' : '● Live Updates'}
+                    </span>
                   )}
                   <Button 
                     onClick={() => setShowAddStudentModal(true)}
                     size="sm"
                     variant="outline"
+                    className={theme === 't2' ? 'border-gray-300' : ''}
                   >
-                    + Add Student
+                    {theme === 't2' ? '+ Öğrenci Ekle' : '+ Add Student'}
                   </Button>
                 </div>
               </div>
               {records.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  No submissions yet. Students will appear here in real-time.
+                  {theme === 't2' ? 'Henüz gönderim yok. Öğrenciler burada gerçek zamanlı olarak görünecektir.' : 'No submissions yet. Students will appear here in real-time.'}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -237,22 +296,22 @@ export default function TeacherAttendanceSessionDetailPage() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Student ID
+                          {theme === 't2' ? 'Öğrenci ID' : 'Student ID'}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Name
+                          {theme === 't2' ? 'Ad Soyad' : 'Name'}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
+                          {theme === 't2' ? 'Durum' : 'Status'}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Submitted At
+                          {theme === 't2' ? 'Gönderim Zamanı' : 'Submitted At'}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Via
+                          {theme === 't2' ? 'Yöntem' : 'Via'}
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Actions
+                          {theme === 't2' ? 'İşlemler' : 'Actions'}
                         </th>
                       </tr>
                     </thead>
@@ -288,14 +347,14 @@ export default function TeacherAttendanceSessionDetailPage() {
                           <td className="px-6 py-4">
                             <button
                               onClick={() => {
-                                if (confirm(`Remove ${record.student_name} from this session?`)) {
+                                if (confirm(theme === 't2' ? `${record.student_name} öğrencisini bu oturumdan kaldırmak istediğinize emin misiniz?` : `Remove ${record.student_name} from this session?`)) {
                                   removeStudentMutation.mutate(record.id)
                                 }
                               }}
                               disabled={removeStudentMutation.isPending}
                               className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
                             >
-                              Remove
+                              {theme === 't2' ? 'Kaldır' : 'Remove'}
                             </button>
                           </td>
                         </tr>
@@ -312,15 +371,17 @@ export default function TeacherAttendanceSessionDetailPage() {
       {/* Add Student Modal */}
       {showAddStudentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Add Student to Session</h3>
+          <div className={`${theme === 't2' ? 'bg-white rounded-2xl' : 'bg-white rounded-lg'} p-8 max-w-md w-full max-h-[80vh] overflow-y-auto mx-4`}>
+            <h3 className="text-lg font-semibold mb-4">
+              {theme === 't2' ? 'Oturuma Öğrenci Ekle' : 'Add Student to Session'}
+            </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Select a student who is enrolled in this course but hasn't submitted attendance yet.
+              {theme === 't2' ? 'Bu derse kayıtlı ancak henüz yoklama göndermemiş bir öğrenci seçin.' : 'Select a student who is enrolled in this course but hasn\'t submitted attendance yet.'}
             </p>
             
             {eligibleStudents && eligibleStudents.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <p>All enrolled students have already submitted attendance.</p>
+                <p>{theme === 't2' ? 'Kayıtlı tüm öğrenciler zaten yoklama göndermiş.' : 'All enrolled students have already submitted attendance.'}</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -335,7 +396,7 @@ export default function TeacherAttendanceSessionDetailPage() {
                     }`}
                   >
                     <div className="font-medium text-gray-900">{student.full_name}</div>
-                    <div className="text-sm text-gray-500">ID: {student.student_id}</div>
+                    <div className="text-sm text-gray-500">{theme === 't2' ? 'ID:' : 'ID:'} {student.student_id}</div>
                   </button>
                 ))}
               </div>
@@ -347,12 +408,15 @@ export default function TeacherAttendanceSessionDetailPage() {
                   if (selectedStudentId) {
                     addStudentMutation.mutate(selectedStudentId)
                   } else {
-                    alert('Please select a student')
+                    alert(theme === 't2' ? 'Lütfen bir öğrenci seçin' : 'Please select a student')
                   }
                 }}
                 disabled={!selectedStudentId || addStudentMutation.isPending}
+                className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}
               >
-                {addStudentMutation.isPending ? 'Adding...' : 'Add Student'}
+                {addStudentMutation.isPending 
+                  ? (theme === 't2' ? 'Ekleniyor...' : 'Adding...')
+                  : (theme === 't2' ? 'Öğrenci Ekle' : 'Add Student')}
               </Button>
               <Button
                 type="button"
@@ -361,8 +425,9 @@ export default function TeacherAttendanceSessionDetailPage() {
                   setShowAddStudentModal(false)
                   setSelectedStudentId('')
                 }}
+                className={theme === 't2' ? 'border-gray-300' : ''}
               >
-                Cancel
+                {theme === 't2' ? 'İptal' : 'Cancel'}
               </Button>
             </div>
           </div>
