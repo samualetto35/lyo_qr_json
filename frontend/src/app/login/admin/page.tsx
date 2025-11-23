@@ -57,12 +57,12 @@ export default function AdminLoginPage() {
 
       <div className={theme === 'l2' ? 'space-y-4' : 'rounded-md shadow-sm -space-y-px'}>
         <div>
-          <label htmlFor="email" className="sr-only">
+          <label htmlFor={`email-${theme}`} className="sr-only">
             Email address
           </label>
           <input
             {...register('email')}
-            id="email"
+            id={`email-${theme}`}
             type="email"
             autoComplete="email"
             className={`appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 ${
@@ -78,12 +78,12 @@ export default function AdminLoginPage() {
           )}
         </div>
         <div className={theme === 'l2' ? 'mt-4' : ''}>
-          <label htmlFor="password" className="sr-only">
+          <label htmlFor={`password-${theme}`} className="sr-only">
             Password
           </label>
           <input
             {...register('password')}
-            id="password"
+            id={`password-${theme}`}
             type="password"
             autoComplete="current-password"
             className={`appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 ${
