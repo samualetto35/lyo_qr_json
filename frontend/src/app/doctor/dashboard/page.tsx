@@ -78,7 +78,7 @@ export default function DoctorDashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'pt-0 pb-12 sm:pb-16' : 'py-8'}`}>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'pt-4 pb-12 sm:pb-16' : 'py-8'}`}>
         {theme === 'd2' ? (
           <div className="space-y-6 max-w-5xl mx-auto">
             {/* Main Hero Card - New Report */}
@@ -88,7 +88,7 @@ export default function DoctorDashboardPage() {
                 <div 
                   className="w-full h-[280px] sm:h-[360px] bg-cover bg-center"
                   style={{
-                    backgroundImage: 'url(/Gemini_Generated_Image_qwbv4yqwbv4yqwbv.png)'
+                    backgroundImage: 'url(/a_clean_professional_and_minimal_ui_button_background_representing_medical_reports_for_a_modern_hea_ba7s6q4npyx617xaak5m_1.png)'
                   }}
                 ></div>
                 
@@ -108,9 +108,14 @@ export default function DoctorDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {/* Reports Card */}
               <Link href="/doctor/reports">
-                <div className="group relative overflow-hidden bg-[#E3E3E3] rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
-                  {/* Placeholder Image Area */}
-                  <div className="w-full h-[200px] sm:h-[240px] bg-[#E3E3E3]"></div>
+                <div className="group relative overflow-hidden rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
+                  {/* Background Image */}
+                  <div 
+                    className="w-full h-[200px] sm:h-[240px] bg-cover bg-center"
+                    style={{
+                      backgroundImage: 'url(/a_clean_professional_and_minimal_ui_button_background_representing_medical_reports_for_a_modern_hea_rpvdcjz05rqu3q85l9xc_3.png)'
+                    }}
+                  ></div>
                   
                   {/* Gradient Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
@@ -126,9 +131,14 @@ export default function DoctorDashboardPage() {
 
               {/* Students Card */}
               <Link href="/doctor/students">
-                <div className="group relative overflow-hidden bg-[#E3E3E3] rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
-                  {/* Placeholder Image Area */}
-                  <div className="w-full h-[200px] sm:h-[240px] bg-[#E3E3E3]"></div>
+                <div className="group relative overflow-hidden rounded-3xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] cursor-pointer transition-all duration-300 hover:shadow-[0px_8px_60px_rgba(0,0,0,0.08)]">
+                  {/* Background Image */}
+                  <div 
+                    className="w-full h-[200px] sm:h-[240px] bg-cover bg-center"
+                    style={{
+                      backgroundImage: 'url(/a_clean_modern_and_minimal_ui_button_background_representing_student_card_for_an_educational_manage_zyq4v27ejagysv634l6b_0.png)'
+                    }}
+                  ></div>
                   
                   {/* Gradient Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
