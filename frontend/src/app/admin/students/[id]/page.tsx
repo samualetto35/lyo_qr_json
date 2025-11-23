@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Link from 'next/link'
 
 export default function StudentDetailPage() {
@@ -14,6 +15,8 @@ export default function StudentDetailPage() {
   const studentId = params.id as string
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const [courseFilter, setCourseFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
     setMounted(true)
@@ -147,10 +150,67 @@ export default function StudentDetailPage() {
           )}
         </div>
 
+        {/* Filters */}
+        {student.courses && student.courses.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Filters</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Course</label>
+                <Select value={courseFilter} onValueChange={setCourseFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Courses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Courses</SelectItem>
+                    {student.courses.map((course: any) => (
+                      <SelectItem key={course.course_id} value={course.course_id}>
+                        {course.course_code} - {course.course_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="medical_report">Medical Report</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Courses and Attendance */}
         {student.courses && student.courses.length > 0 && (
           <div className="space-y-6">
-            {student.courses.map((course: any) => (
+            {student.courses
+              .filter((course: any) => courseFilter === 'all' || course.course_id === courseFilter)
+              .map((course: any) => {
+                // Filter attendance records by status
+                const filteredRecords = course.attendance_records?.filter((record: any) => {
+                  if (statusFilter === 'all') return true
+                  if (statusFilter === 'present') {
+                    return record.status === 'present' || record.status === 'manual_present'
+                  }
+                  if (statusFilter === 'absent') {
+                    return record.status === 'absent'
+                  }
+                  if (statusFilter === 'medical_report') {
+                    return record.status === 'medical_report'
+                  }
+                  return true
+                }) || []
+
+                return (
               <div key={course.course_id} className="bg-white rounded-lg shadow p-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">{course.course_name}</h3>
@@ -219,8 +279,8 @@ export default function StudentDetailPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {course.attendance_records && course.attendance_records.length > 0 ? (
-                          course.attendance_records.map((record: any) => (
+                        {filteredRecords.length > 0 ? (
+                          filteredRecords.map((record: any) => (
                             <tr key={record.session_id}>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                                 {new Date(record.session_date).toLocaleDateString('tr-TR')}
@@ -262,7 +322,8 @@ export default function StudentDetailPage() {
                   </div>
                 </div>
               </div>
-            ))}
+                )
+              })}
           </div>
         )}
       </main>

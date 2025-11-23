@@ -153,15 +153,27 @@ export class AdminHealthSystemService {
         where,
         skip,
         take: pageSize,
-        include: {
-          _count: {
-            select: { medicalReports: true },
-          },
-        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.healthSystemStudent.count({ where }),
     ]);
+
+    // Get medical reports count for these students by matching studentId with Student table
+    const studentIds = students.map(s => s.studentId);
+    const actualStudents = await this.prisma.student.findMany({
+      where: {
+        studentId: { in: studentIds },
+      },
+      include: {
+        _count: {
+          select: { medicalReports: true },
+        },
+      },
+    });
+
+    const reportsCountMap = new Map(
+      actualStudents.map(s => [s.studentId, s._count.medicalReports])
+    );
 
     return {
       data: students.map((s) => ({
@@ -172,7 +184,7 @@ export class AdminHealthSystemService {
         gender: s.gender,
         program: s.program,
         is_active: s.isActive,
-        reports_count: s._count.medicalReports,
+        reports_count: reportsCountMap.get(s.studentId) || 0,
         created_at: s.createdAt,
       })),
       meta: {
