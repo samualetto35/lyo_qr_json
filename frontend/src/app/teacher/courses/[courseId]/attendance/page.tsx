@@ -45,6 +45,18 @@ export default function TeacherCourseAttendancePage() {
     enabled: !!courseId && !!user,
   })
 
+  // Get course details from courses list
+  const { data: courses } = useQuery({
+    queryKey: ['teacher-courses'],
+    queryFn: async () => {
+      const response = await api.get('/teacher/courses')
+      return response.data
+    },
+    enabled: !!user,
+  })
+
+  const course = courses?.find((c: any) => c.id === courseId)
+
   const createSessionMutation = useMutation({
     mutationFn: async (data: any) => {
       return await api.post(`/teacher/courses/${courseId}/attendance-sessions`, data)
@@ -111,7 +123,7 @@ export default function TeacherCourseAttendancePage() {
         {/* Back Button */}
         {theme === 't2' && (
           <Link
-            href={`/teacher/courses/${courseId}`}
+            href="/teacher/courses"
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +141,10 @@ export default function TeacherCourseAttendancePage() {
         {/* Start Session Button */}
         <div className="mb-6">
           <Button onClick={() => setShowModal(true)} size="lg" className={`w-full md:w-auto ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}`}>
-            {theme === 't2' ? '🎯 Yeni Yoklama Oturumu Başlat' : '🎯 Start New Attendance Session'}
+            {theme === 't2' 
+              ? `🎯 Yeni Yoklama Oturumu Başlat${course ? ` - ${course.name}` : ''}`
+              : `🎯 Start New Attendance Session${course ? ` - ${course.name}` : ''}`
+            }
           </Button>
         </div>
 

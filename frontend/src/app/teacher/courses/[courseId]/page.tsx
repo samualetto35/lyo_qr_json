@@ -50,6 +50,18 @@ export default function TeacherCourseDetailPage() {
     enabled: !!courseId && activeTab === 'attendance' && !!user,
   })
 
+  // Get course details from courses list
+  const { data: courses } = useQuery({
+    queryKey: ['teacher-courses'],
+    queryFn: async () => {
+      const response = await api.get('/teacher/courses')
+      return response.data
+    },
+    enabled: !!user,
+  })
+
+  const course = courses?.find((c: any) => c.id === courseId)
+
   const handleLogout = () => {
     authService.logout()
     router.push('/login/teacher')
@@ -112,18 +124,23 @@ export default function TeacherCourseDetailPage() {
         )}
 
         {/* Title */}
-        <h2 className={`${theme === 't2' ? 'text-[28px] font-semibold text-gray-900 mb-6' : 'text-2xl font-bold text-gray-900 mb-6'}`}>
+        <h2 className={`${theme === 't2' ? 'text-[28px] font-semibold text-gray-900 mb-4' : 'text-2xl font-bold text-gray-900 mb-6'}`}>
           {theme === 't2' ? 'Ders Detayları' : 'Course Details'}
         </h2>
 
-        {/* Quick Actions */}
-        <div className="mb-6">
-          <Link href={`/teacher/courses/${courseId}/attendance`}>
-            <Button size="lg" className={`w-full md:w-auto ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}`}>
-              {theme === 't2' ? '🎯 Yoklama Oturumu Başlat' : '🎯 Start Attendance Session'}
-            </Button>
-          </Link>
-        </div>
+        {/* Course Info */}
+        {course && (
+          <div className={`mb-6 ${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] p-6' : 'bg-white rounded-lg shadow p-6'}`}>
+            <h3 className={`${theme === 't2' ? 'text-xl font-semibold text-gray-900 mb-2' : 'text-lg font-semibold text-gray-900 mb-2'}`}>
+              {course.name}
+            </h3>
+            {course.code && (
+              <p className={`${theme === 't2' ? 'text-sm text-gray-600' : 'text-sm text-gray-500'}`}>
+                {theme === 't2' ? 'Kod:' : 'Code:'} {course.code}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className={`${theme === 't2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)]' : 'bg-white rounded-lg shadow'}`}>
