@@ -41,18 +41,18 @@ export default function DoctorDashboardPage() {
   return (
     <div className={`min-h-screen ${theme === 'd2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
       {/* Header */}
-      <header className={theme === 'd2' ? 'bg-white' : 'bg-white shadow'}>
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-8' : 'py-4'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`}>
+      <header className={theme === 'd2' ? 'bg-transparent' : 'bg-white shadow'}>
+        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className={`${theme === 'd2' ? 'text-[28px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
                 {theme === 'd2' ? 'Doktor Paneli' : 'Doctor Portal'}
               </h1>
               <div className="hidden md:block">
                 <DoctorThemeSwitcher />
               </div>
             </div>
-            <p className={`${theme === 'd2' ? 'text-sm text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
+            <p className={`${theme === 'd2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
               {theme === 'd2' ? (
                 <>Hoşgeldiniz, {user.first_name} {user.last_name}</>
               ) : (
@@ -60,14 +60,14 @@ export default function DoctorDashboardPage() {
               )}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="md:hidden">
               <DoctorThemeSwitcher />
             </div>
             <button
               onClick={handleLogout}
               className={theme === 'd2' 
-                ? 'px-4 py-2 text-xs font-normal text-gray-700 bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
+                ? 'px-3 py-1.5 text-xs font-normal text-gray-700 bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
                 : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900'
               }
             >
