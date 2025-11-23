@@ -412,7 +412,7 @@ export default function TeacherAttendanceSessionDetailPage() {
                   }
                 }}
                 disabled={!selectedStudentId || addStudentMutation.isPending}
-                className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}
+                className={theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''}
               >
                 {addStudentMutation.isPending 
                   ? (theme === 't2' ? 'Ekleniyor...' : 'Adding...')

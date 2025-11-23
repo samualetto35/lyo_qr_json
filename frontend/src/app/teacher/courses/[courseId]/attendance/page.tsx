@@ -140,7 +140,7 @@ export default function TeacherCourseAttendancePage() {
 
         {/* Start Session Button */}
         <div className="mb-6">
-          <Button onClick={() => setShowModal(true)} size="lg" className={`w-full md:w-auto ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}`}>
+          <Button onClick={() => setShowModal(true)} size="lg" className={`w-full md:w-auto ${theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''}`}>
             {theme === 't2' 
               ? `🎯 Yeni Yoklama Oturumu Başlat${course ? ` - ${course.name}` : ''}`
               : `🎯 Start New Attendance Session${course ? ` - ${course.name}` : ''}`
@@ -276,7 +276,7 @@ export default function TeacherCourseAttendancePage() {
                 </div>
               </div>
               <div className="mt-6 flex gap-2">
-                <Button type="submit" disabled={createSessionMutation.isPending} className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}>
+                <Button type="submit" disabled={createSessionMutation.isPending} className={theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''}>
                   {createSessionMutation.isPending 
                     ? (theme === 't2' ? 'Oluşturuluyor...' : 'Creating...')
                     : (theme === 't2' ? 'Oturum Oluştur' : 'Create Session')}

@@ -126,7 +126,7 @@ export default function TeacherCoursesPage() {
           {theme === 't2' && (
             <Button 
               onClick={() => setShowModal(true)} 
-              className="bg-gray-900 hover:bg-gray-800 text-white rounded-full"
+              className="bg-blue-700 hover:bg-blue-800 text-white rounded-full"
             >
               {theme === 't2' ? 'Yeni Ders Oluştur' : 'Create New Course'}
             </Button>
@@ -151,7 +151,7 @@ export default function TeacherCoursesPage() {
             <p className={`${theme === 't2' ? 'text-gray-700' : 'text-gray-500'} mb-4`}>
               {theme === 't2' ? 'Henüz dersiniz yok.' : 'You don\'t have any courses yet.'}
             </p>
-            <Button onClick={() => setShowModal(true)} className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}>
+            <Button onClick={() => setShowModal(true)} className={theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''}>
               {theme === 't2' ? 'İlk Dersinizi Oluşturun' : 'Create Your First Course'}
             </Button>
           </div>
@@ -177,7 +177,7 @@ export default function TeacherCoursesPage() {
                       </Button>
                     </Link>
                     <Link href={`/teacher/courses/${course.id}/attendance`}>
-                      <Button className={`w-full ${theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''} mt-2`}>
+                      <Button className={`w-full ${theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''} mt-2`}>
                         {theme === 't2' ? 'Yoklama Başlat' : 'Start Attendance'}
                       </Button>
                     </Link>
@@ -243,7 +243,7 @@ export default function TeacherCoursesPage() {
                 </div>
               </div>
               <div className="mt-6 flex gap-2">
-                <Button type="submit" disabled={createCourseMutation.isPending} className={theme === 't2' ? 'bg-gray-900 hover:bg-gray-800 text-white' : ''}>
+                <Button type="submit" disabled={createCourseMutation.isPending} className={theme === 't2' ? 'bg-blue-700 hover:bg-blue-800 text-white' : ''}>
                   {createCourseMutation.isPending 
                     ? (theme === 't2' ? 'Oluşturuluyor...' : 'Creating...')
                     : (theme === 't2' ? 'Ders Oluştur' : 'Create Course')}
