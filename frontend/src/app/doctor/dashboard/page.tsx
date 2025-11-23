@@ -93,7 +93,7 @@ export default function DoctorDashboardPage() {
                 ></div>
                 
                 {/* Gradient Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
+                <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-8 sm:pt-10 px-6 sm:px-8">
                   <h2 className="text-[18px] sm:text-[20px] font-semibold text-white mb-2">
                     Rapor Ekle +
                   </h2>
@@ -118,7 +118,7 @@ export default function DoctorDashboardPage() {
                   ></div>
                   
                   {/* Gradient Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-6 sm:pt-7 px-6 sm:px-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Raporlar
                     </h3>
@@ -141,7 +141,7 @@ export default function DoctorDashboardPage() {
                   ></div>
                   
                   {/* Gradient Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/30 to-transparent backdrop-blur-[25px] flex flex-col justify-end p-6 sm:p-8">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/45 via-black/35 to-black/20 backdrop-blur-[25px] flex flex-col justify-end pb-5 sm:pb-6 pt-6 sm:pt-7 px-6 sm:px-8">
                     <h3 className="text-[17px] sm:text-[18px] font-semibold text-white mb-2">
                       Öğrenciler
                     </h3>

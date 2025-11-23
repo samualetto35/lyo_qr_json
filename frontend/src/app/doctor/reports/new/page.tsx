@@ -6,11 +6,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
+import { useDoctorTheme } from '@/contexts/doctor-theme.context'
+import { DoctorThemeSwitcher } from '@/components/ui/doctor-theme-switcher'
+import { SearchableDropdown } from '@/components/ui/searchable-dropdown'
+import { Calendar } from '@/components/ui/calendar'
 import Link from 'next/link'
 
 export default function NewReportPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { theme } = useDoctorTheme()
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState('')
@@ -73,79 +78,153 @@ export default function NewReportPage() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0]
 
+  const studentOptions =
+    students?.data?.map((student: any) => ({
+      value: student.student_id,
+      label: `${student.student_id} - ${student.first_name} ${student.last_name}`,
+    })) || []
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen ${theme === 'd2' ? 'bg-[#FAFAFA]' : 'bg-gray-100'}`}>
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/doctor/dashboard" className="text-primary-600 hover:text-primary-700">
-              ← Dashboard
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">New Medical Report</h1>
+      <header className={theme === 'd2' ? 'bg-transparent' : 'bg-white shadow'}>
+        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'py-4' : 'py-4'} flex flex-row justify-between items-center`}>
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
+                {theme === 'd2' ? 'Doktor Paneli' : 'Doctor Portal'}
+              </h1>
+              <div className="hidden md:block">
+                <DoctorThemeSwitcher />
+              </div>
+            </div>
+            <p className={`${theme === 'd2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
+              {theme === 'd2' ? (
+                <>Hoşgeldiniz, {user.first_name} {user.last_name}</>
+              ) : (
+                <>Welcome, {user.first_name} {user.last_name}</>
+              )}
+            </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="md:hidden">
+              <DoctorThemeSwitcher />
+            </div>
+            <button
+              onClick={handleLogout}
+              className={theme === 'd2' 
+                ? 'px-3 py-1.5 text-xs font-normal text-[#D96A6A] bg-white border border-[#D96A6A] rounded-full shadow-[0px_4px_40px_rgba(0,0,0,0.06)] hover:bg-gray-50 transition-colors'
+                : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900'
+              }
+            >
+              {theme === 'd2' ? 'Çıkış Yap' : 'Logout'}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-6">
-              {/* Student Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Student
-                </label>
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">-- Select a student --</option>
-                  {students?.data?.map((student: any) => (
-                    <option key={student.id} value={student.student_id}>
-                      {student.student_id} - {student.first_name} {student.last_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${theme === 'd2' ? 'pt-4 pb-12 sm:pb-16' : 'py-8'}`}>
+        <div className={`${theme === 'd2' ? 'max-w-2xl mx-auto' : ''}`}>
+          {/* Back Button */}
+          {theme === 'd2' && (
+            <Link
+              href="/doctor/dashboard"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Geri Git
+            </Link>
+          )}
 
-              {/* Date Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Report Date
-                </label>
-                <input
-                  type="date"
-                  value={reportDate}
-                  onChange={(e) => setReportDate(e.target.value)}
-                  max={today}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
+          {/* Title */}
+          <h2 className={`${theme === 'd2' ? 'text-[28px] font-semibold text-gray-900 mb-8' : 'text-2xl font-bold text-gray-900 mb-6'}`}>
+            {theme === 'd2' ? 'Rapor Ekle +' : 'New Medical Report'}
+          </h2>
 
-              {/* Submit Button */}
-              <div className="flex gap-4">
-                <Button type="submit" disabled={createReportMutation.isPending} className="flex-1">
-                  {createReportMutation.isPending ? 'Creating...' : 'Create Report'}
-                </Button>
-                <Link href="/doctor/dashboard">
-                  <Button type="button" variant="outline">
-                    Cancel
+          <div className={`${theme === 'd2' ? 'bg-white rounded-2xl shadow-[0px_4px_40px_rgba(0,0,0,0.06)] p-8' : 'bg-white rounded-lg shadow p-6'}`}>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-6">
+                {/* Student Selection */}
+                <div>
+                  <label className={`block ${theme === 'd2' ? 'text-sm font-medium text-gray-700 mb-3' : 'text-sm font-medium text-gray-700 mb-2'}`}>
+                    {theme === 'd2' ? 'Öğrenci Seçin' : 'Select Student'}
+                  </label>
+                  {theme === 'd2' ? (
+                    <SearchableDropdown
+                      options={studentOptions}
+                      value={selectedStudentId}
+                      onChange={setSelectedStudentId}
+                      placeholder="Öğrenci ara ve seç..."
+                    />
+                  ) : (
+                    <select
+                      value={selectedStudentId}
+                      onChange={(e) => setSelectedStudentId(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                      style={{ fontSize: '16px' }}
+                    >
+                      <option value="">-- Select a student --</option>
+                      {students?.data?.map((student: any) => (
+                        <option key={student.id} value={student.student_id}>
+                          {student.student_id} - {student.first_name} {student.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Date Selection */}
+                <div>
+                  <label className={`block ${theme === 'd2' ? 'text-sm font-medium text-gray-700 mb-3' : 'text-sm font-medium text-gray-700 mb-2'}`}>
+                    {theme === 'd2' ? 'Rapor Tarihi' : 'Report Date'}
+                  </label>
+                  {theme === 'd2' ? (
+                    <Calendar
+                      value={reportDate}
+                      onChange={setReportDate}
+                      maxDate={today}
+                    />
+                  ) : (
+                    <input
+                      type="date"
+                      value={reportDate}
+                      onChange={(e) => setReportDate(e.target.value)}
+                      max={today}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                      style={{ fontSize: '16px' }}
+                    />
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="submit"
+                    disabled={createReportMutation.isPending}
+                    className={theme === 'd2' ? 'flex-1 bg-gray-900 hover:bg-gray-800 text-white' : 'flex-1'}
+                  >
+                    {createReportMutation.isPending
+                      ? theme === 'd2'
+                        ? 'Oluşturuluyor...'
+                        : 'Creating...'
+                      : theme === 'd2'
+                      ? 'Rapor Oluştur'
+                      : 'Create Report'}
                   </Button>
-                </Link>
+                  <Link href="/doctor/dashboard">
+                    <Button type="button" variant="outline" className={theme === 'd2' ? 'border-gray-300' : ''}>
+                      {theme === 'd2' ? 'İptal' : 'Cancel'}
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </main>
     </div>
