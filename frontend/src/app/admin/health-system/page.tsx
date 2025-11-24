@@ -62,6 +62,24 @@ export default function AdminHealthSystemPage() {
 
   if (!mounted || !user) return null
 
+  const studentsWithReports =
+    students?.data?.filter((student: any) => (student.reports_count || 0) > 0) ?? []
+
+  const filteredStudents = search
+    ? studentsWithReports.filter((student: any) => {
+        const term = search.toLowerCase()
+        const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.toLowerCase()
+        return (
+          student.student_id?.toLowerCase().includes(term) ||
+          fullName.includes(term)
+        )
+      })
+    : studentsWithReports
+
+  const totalReports = Array.isArray(reportsSummary) ? reportsSummary.length : undefined
+  const reportsDisplay =
+    isReportsLoading || typeof totalReports !== 'number' ? '...' : totalReports
+
   const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -99,7 +117,7 @@ export default function AdminHealthSystemPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center">Loading...</div>
-          ) : studentsWithReports.length === 0 ? (
+          ) : filteredStudents.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No students with health reports.</div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
@@ -123,7 +141,7 @@ export default function AdminHealthSystemPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {studentsWithReports.map((student: any) => (
+                {filteredStudents.map((student: any) => (
                   <tr key={student.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {student.student_id}
@@ -149,12 +167,6 @@ export default function AdminHealthSystemPage() {
       </main>
     </div>
   )
-
-  const totalReports = Array.isArray(reportsSummary) ? reportsSummary.length : undefined
-  const reportsDisplay =
-    isReportsLoading || typeof totalReports !== 'number' ? '...' : totalReports
-  const studentsWithReports =
-    students?.data?.filter((student: any) => (student.reports_count || 0) > 0) ?? []
 
   if (theme === 'a2') {
     return (
@@ -209,7 +221,7 @@ export default function AdminHealthSystemPage() {
             <div className="overflow-x-auto">
               {isLoading ? (
                 <div className="p-8 text-center text-gray-500">Öğrenciler yükleniyor...</div>
-              ) : studentsWithReports.length === 0 ? (
+              ) : filteredStudents.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   Raporu bulunan öğrenci kaydı bulunamadı.
                 </div>
@@ -225,7 +237,7 @@ export default function AdminHealthSystemPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {studentsWithReports.map((student: any) => (
+                    {filteredStudents.map((student: any) => (
                       <tr key={student.id} className="hover:bg-gray-50 transition">
                         <td className="px-6 py-4 whitespace-nowrap">{student.student_id}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
