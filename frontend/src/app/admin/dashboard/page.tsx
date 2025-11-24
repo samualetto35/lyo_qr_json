@@ -8,6 +8,7 @@ import api from '@/lib/api'
 import Link from 'next/link'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -379,62 +380,55 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Hourly Distribution */}
+            {/* Hourly Distribution - Interactive Chart */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
               <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Saatlik Dağılım</p>
               {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
-                <div className="relative">
-                  <svg className="w-full h-48" viewBox="0 0 400 200" preserveAspectRatio="none">
-                    {stats.hourlyDistribution
-                      .filter((h: any) => h.count > 0)
-                      .map((hour: any, idx: number, arr: any[]) => {
-                        const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
-                        const barHeight = (hour.count / maxCount) * 180
-                        const barWidth = 380 / arr.length
-                        const x = (idx * barWidth) + 10
-                        const y = 190 - barHeight
-                        return (
-                          <g key={idx}>
-                            <rect
-                              x={x}
-                              y={y}
-                              width={barWidth - 4}
-                              height={barHeight}
-                              fill="url(#blueGradient)"
-                              rx="4"
-                              className="hover:opacity-80 transition-opacity cursor-pointer"
-                            />
-                            <text
-                              x={x + (barWidth - 4) / 2}
-                              y={195}
-                              textAnchor="middle"
-                              className="text-[8px] fill-gray-600"
-                              fontSize="10"
-                            >
-                              {String(hour.hour).padStart(2, '0')}
-                            </text>
-                            <text
-                              x={x + (barWidth - 4) / 2}
-                              y={y - 5}
-                              textAnchor="middle"
-                              className="text-[8px] fill-gray-700 font-medium"
-                              fontSize="10"
-                            >
-                              {hour.count}
-                            </text>
-                          </g>
-                        )
-                      })}
-                    <defs>
-                      <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#60a5fa" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart 
+                    data={stats.hourlyDistribution.filter((h: any) => h.count > 0)}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="hour" 
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      tickFormatter={(value) => `${String(value).padStart(2, '0')}:00`}
+                      label={{ value: 'Saat', position: 'insideBottom', offset: -5, style: { fontSize: 11, fill: '#9ca3af' } }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11, fill: '#6b7280' }}
+                      label={{ value: 'Oturum Sayısı', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value} oturum`, '']}
+                      labelFormatter={(label) => `${String(label).padStart(2, '0')}:00`}
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="count" 
+                      radius={[6, 6, 0, 0]}
+                    >
+                      {stats.hourlyDistribution
+                        .filter((h: any) => h.count > 0)
+                        .map((entry: any, index: number) => {
+                          const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
+                          const intensity = entry.count / maxCount
+                          const color = `rgba(59, 130, 246, ${0.5 + intensity * 0.5})`
+                          return <Cell key={`cell-${index}`} fill={color} />
+                        })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               ) : (
-                <p className="text-sm text-gray-400 text-center py-8">Bugün henüz oturum yok</p>
+                <div className="h-[240px] flex items-center justify-center">
+                  <p className="text-sm text-gray-400">Bugün henüz oturum yok</p>
+                </div>
               )}
             </div>
           </div>
