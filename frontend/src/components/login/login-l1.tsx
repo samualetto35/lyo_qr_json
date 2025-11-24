@@ -19,11 +19,11 @@ export function LoginL1({
     illustrationSrc ?? '/images/login-default.png'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-3 sm:px-4 lg:px-6">
       <div className="w-full max-w-6xl space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="hidden md:flex">
-            <div className="w-full h-[640px] rounded-[38px] overflow-hidden">
+            <div className="w-full h-[640px] rounded-[24px] overflow-hidden">
               <div
                 className="w-full h-full bg-cover bg-center"
                 style={{
