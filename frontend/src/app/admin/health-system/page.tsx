@@ -1,22 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminHealthSystemPage() {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [search, setSearch] = useState('')
   const { theme } = useAdminTheme()
 
@@ -50,34 +46,6 @@ export default function AdminHealthSystemPage() {
     enabled: !!user,
   })
 
-  const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return await api.post('/admin/health-system/students/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['health-system-students'] })
-      setSelectedFile(null)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-      alert(`Upload successful! Created: ${data.data.created}, Updated: ${data.data.updated}`)
-    },
-    onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to upload file')
-    },
-  })
-
-  const handleUpload = () => {
-    if (!selectedFile) {
-      alert('Please select a file')
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('file', selectedFile)
-    uploadMutation.mutate(formData)
-  }
-
   const handleLogout = () => {
     authService.logout()
     router.push('/login/admin')
@@ -107,26 +75,6 @@ export default function AdminHealthSystemPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Upload Section */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Import Students</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Upload CSV or Excel file with columns: student_id, name, surname (optional: gender, program)
-          </p>
-          <div className="flex gap-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="flex-1"
-            />
-            <Button onClick={handleUpload} disabled={!selectedFile || uploadMutation.isPending}>
-              {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
-            </Button>
-          </div>
-        </div>
-
         {/* Search */}
         <div className="mb-6">
           <input
@@ -215,7 +163,7 @@ export default function AdminHealthSystemPage() {
               </p>
             </Link>
             <Link
-              href="/admin/students"
+              href="/admin/health-system/reports"
               className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm hover:border-gray-200 transition"
             >
               <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Raporlar</p>
@@ -224,33 +172,18 @@ export default function AdminHealthSystemPage() {
                 <span className="text-base font-normal text-gray-500">aktif rapor</span>
               </h2>
               <p className="text-sm text-gray-500 mt-2">
-                Öğrencilerin rapor geçmişini görüntülemek için Öğrenciler sayfasına gidin.
+                Doktorların paylaştığı tüm raporları liste halinde inceleyin.
               </p>
             </Link>
           </div>
 
-          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+          <div className="rounded-3xl border border-gray-100 p-6 shadow-sm bg-white/90">
             <div className="flex flex-col gap-2 mb-6">
               <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Sağlık Sistemi</p>
               <h1 className="text-2xl font-semibold text-gray-900">Öğrenci Listesi</h1>
-              <p className="text-sm text-gray-500">Dosya yükleyerek sağlık sistemindeki verileri güncelleyin.</p>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                ref={fileInputRef}
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gray-900 file:text-white hover:file:bg-gray-700"
-              />
-              <Button
-                onClick={handleUpload}
-                disabled={!selectedFile || uploadMutation.isPending}
-                className="rounded-full bg-[#0C2A5E] hover:bg-[#123679]"
-              >
-                {uploadMutation.isPending ? 'Yükleniyor...' : 'Dosyayı Yükle'}
-              </Button>
+              <p className="text-sm text-gray-500">
+                Öğrenci kayıtlarını arayın ve rapor sayılarını görüntüleyin.
+              </p>
             </div>
 
             <input

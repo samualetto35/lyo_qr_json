@@ -55,8 +55,8 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFB] text-gray-900">
-      <header className="bg-white">
+    <div className="min-h-screen bg-[#F3F5F7] text-gray-900">
+      <header className="bg-[#F3F5F7]">
         <div className="max-w-6xl mx-auto px-4 lg:px-0 py-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-[13px] uppercase tracking-[0.2em] text-gray-400">
@@ -80,8 +80,8 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
           </div>
         </div>
 
-        <nav className="border-t border-gray-100">
-          <div className="max-w-6xl mx-auto px-4 lg:px-0">
+        <nav>
+          <div className="max-w-6xl mx-auto px-4 lg:px-0 pt-2">
             <ul className="flex overflow-x-auto gap-2 text-sm font-medium text-gray-500">
               {navItems.map((item) => (
                 <li key={item.key}>

@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AdminHealthSystemService {
@@ -194,6 +195,83 @@ export class AdminHealthSystemService {
         totalPages: Math.ceil(total / pageSize),
       },
     };
+  }
+
+  async getMedicalReports(search?: string, startDate?: string, endDate?: string) {
+    const where: Prisma.MedicalReportWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { student: { studentId: { contains: search, mode: 'insensitive' } } },
+        {
+          student: {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        },
+        {
+          doctor: {
+            OR: [
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+            ],
+          },
+        },
+      ];
+    }
+
+    if (startDate || endDate) {
+      where.reportDate = {};
+      if (startDate) {
+        where.reportDate.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.reportDate.lte = new Date(endDate);
+      }
+    }
+
+    const reports = await this.prisma.medicalReport.findMany({
+      where,
+      orderBy: { reportDate: 'desc' },
+      include: {
+        student: {
+          select: {
+            id: true,
+            studentId: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return reports.map((report) => ({
+      id: report.id,
+      report_date: report.reportDate,
+      created_at: report.createdAt,
+      student: {
+        id: report.student.id,
+        student_id: report.student.studentId,
+        first_name: report.student.firstName,
+        last_name: report.student.lastName,
+      },
+      doctor: {
+        id: report.doctor.id,
+        first_name: report.doctor.firstName,
+        last_name: report.doctor.lastName,
+        email: report.doctor.email,
+      },
+    }));
   }
 
   private async parseFile(file: Express.Multer.File): Promise<any[]> {

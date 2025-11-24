@@ -84,7 +84,8 @@ export default function AdminTeachersPage() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="ornek@sabanciuniv.edu"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md placeholder:text-gray-400"
             />
           </div>
           <div>
@@ -94,7 +95,8 @@ export default function AdminTeachersPage() {
               required
               value={formData.first_name}
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Ad"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md placeholder:text-gray-400"
             />
           </div>
           <div>
@@ -104,7 +106,8 @@ export default function AdminTeachersPage() {
               required
               value={formData.last_name}
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="Soyad"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md placeholder:text-gray-400"
             />
           </div>
           <div>
@@ -115,7 +118,8 @@ export default function AdminTeachersPage() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              placeholder="En az 8 karakter"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md placeholder:text-gray-400"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

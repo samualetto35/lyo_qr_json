@@ -41,5 +41,14 @@ export class AdminHealthSystemController {
       search,
     );
   }
+
+  @Get('reports')
+  async getReports(
+    @Query('search') search?: string,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+  ) {
+    return this.healthSystemService.getMedicalReports(search, startDate, endDate);
+  }
 }
 
