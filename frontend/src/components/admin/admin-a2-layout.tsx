@@ -57,12 +57,21 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
 
   useEffect(() => {
     const nav = navRef.current
-    if (!nav) return
+    if (!nav || typeof window === 'undefined') return
 
-    const stored = sessionStorage.getItem('admin-nav-scroll')
-    if (stored) {
+    const restoreScrollPosition = () => {
+      const stored = sessionStorage.getItem('admin-nav-scroll')
+      if (!stored) return
+
+      const previousBehavior = nav.style.scrollBehavior
+      nav.style.scrollBehavior = 'auto'
       nav.scrollLeft = Number(stored)
+      requestAnimationFrame(() => {
+        nav.style.scrollBehavior = previousBehavior
+      })
     }
+
+    restoreScrollPosition()
 
     const handleScroll = () => {
       sessionStorage.setItem('admin-nav-scroll', String(nav.scrollLeft))
@@ -82,7 +91,7 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
             <p className="text-[13px] uppercase tracking-[0.2em] text-gray-400">
               Admin Portalı
             </p>
-            <p className="text-2xl font-semibold text-gray-900 mt-1 flex items-center gap-2">
+            <p className="text-xl sm:text-2xl font-semibold text-gray-900 mt-1 flex items-center gap-2 leading-tight">
               Hoşgeldin, {user?.first_name || 'Admin'}
               <span role="img" aria-label="wave">
                 👋
@@ -102,18 +111,15 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
 
         <nav>
           <div className="max-w-6xl mx-auto px-4 lg:px-0 pt-2">
-            <ul
-              ref={navRef}
-              className="flex overflow-x-auto gap-2 text-sm font-medium text-gray-500 scroll-smooth"
-            >
+            <ul ref={navRef} className="flex overflow-x-auto gap-2 text-sm font-medium text-gray-500">
               {navItems.map((item) => (
                 <li key={item.key}>
                   <Link
                     href={item.href}
                     className={clsx(
-                      'inline-flex items-center px-4 py-3 rounded-full whitespace-nowrap transition',
+                      'inline-flex items-center px-3 py-2 rounded-full whitespace-nowrap transition border border-transparent',
                       activeKey === item.key
-                        ? 'bg-gray-900 text-white'
+                        ? 'bg-gray-900 text-white shadow-sm'
                         : 'hover:text-gray-900'
                     )}
                   >

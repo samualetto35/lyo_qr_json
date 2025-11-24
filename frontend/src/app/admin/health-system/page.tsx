@@ -46,6 +46,15 @@ export default function AdminHealthSystemPage() {
     enabled: !!user,
   })
 
+  const { data: reportsSummary, isLoading: isReportsLoading } = useQuery({
+    queryKey: ['admin-health-report-count'],
+    queryFn: async () => {
+      const response = await api.get('/admin/health-system/reports')
+      return response.data
+    },
+    enabled: !!user,
+  })
+
   const handleLogout = () => {
     authService.logout()
     router.push('/login/admin')
@@ -139,10 +148,9 @@ export default function AdminHealthSystemPage() {
     </div>
   )
 
-  const totalReports = students?.data?.reduce(
-    (sum: number, student: any) => sum + (student.reports_count || 0),
-    0
-  )
+  const totalReports = Array.isArray(reportsSummary) ? reportsSummary.length : undefined
+  const reportsDisplay =
+    isReportsLoading || typeof totalReports !== 'number' ? '...' : totalReports
 
   if (theme === 'a2') {
     return (
@@ -168,7 +176,7 @@ export default function AdminHealthSystemPage() {
             >
               <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Raporlar</p>
               <h2 className="text-3xl font-semibold text-gray-900 mt-2">
-                {totalReports || 0}{' '}
+                {reportsDisplay}{' '}
                 <span className="text-base font-normal text-gray-500">aktif rapor</span>
               </h2>
               <p className="text-sm text-gray-500 mt-2">
