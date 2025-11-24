@@ -58,13 +58,6 @@ export default function AdminHealthSystemPage() {
     enabled: !!user,
   })
 
-  const handleLogout = () => {
-    authService.logout()
-    router.push('/login/admin')
-  }
-
-  if (!mounted || !user) return null
-
   const studentsWithReports = useMemo(
     () =>
       students?.data?.filter((student: any) => getReportCount(student) > 0) ?? [],
@@ -86,6 +79,13 @@ export default function AdminHealthSystemPage() {
   const totalReports = Array.isArray(reportsSummary) ? reportsSummary.length : undefined
   const reportsDisplay =
     isReportsLoading || typeof totalReports !== 'number' ? '...' : totalReports
+
+  const handleLogout = () => {
+    authService.logout()
+    router.push('/login/admin')
+  }
+
+  if (!mounted || !user) return null
 
   const legacyContent = (
     <div className="min-h-screen bg-gray-100">
