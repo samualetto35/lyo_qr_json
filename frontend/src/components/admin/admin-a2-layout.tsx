@@ -111,7 +111,10 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
 
         <nav>
           <div className="max-w-6xl mx-auto px-4 lg:px-0 pt-2">
-            <ul ref={navRef} className="flex overflow-x-auto gap-2 text-sm font-medium text-gray-500">
+            <ul
+              ref={navRef}
+              className="flex overflow-x-auto hide-scrollbar gap-2 text-sm font-medium text-gray-500"
+            >
               {navItems.map((item) => (
                 <li key={item.key}>
                   <Link

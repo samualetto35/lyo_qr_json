@@ -452,7 +452,7 @@ export default function AdminAttendancePage() {
                 <table className="min-w-full divide-y divide-gray-100 text-sm">
                   <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                     <tr>
-                      <th className="px-6 py-3 text-left">Oturum</th>
+                      <th className="px-6 py-3 text-left w-48">Oturum</th>
                       <th className="px-6 py-3 text-left">Ders</th>
                       <th className="px-6 py-3 text-left">Öğretmen</th>
                       <th className="px-6 py-3 text-left">Tarih</th>
@@ -480,7 +480,7 @@ export default function AdminAttendancePage() {
 
                       return (
                         <tr key={sessionId || session.id} className="hover:bg-gray-50 transition">
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 w-48">
                             <div className="font-medium text-gray-900">
                               {resolveSessionName(session)}
                             </div>

@@ -73,6 +73,12 @@ export default function AdminImportsPage() {
 
   if (!mounted || !user) return null
 
+  const batchList = Array.isArray(batches)
+    ? batches
+    : Array.isArray(batches?.data)
+    ? batches.data
+    : []
+
   const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
@@ -132,7 +138,7 @@ export default function AdminImportsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {batches?.map((batch: any) => (
+                {batchList.map((batch: any) => (
                   <tr key={batch.id}>
                     <td className="px-6 py-4 text-sm text-gray-900">{batch.original_filename}</td>
                     <td className="px-6 py-4">
@@ -207,12 +213,12 @@ export default function AdminImportsPage() {
             <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Yükleme Geçmişi</h2>
-                <p className="text-sm text-gray-500">Son {batches?.data?.length || 0} işlem</p>
+                <p className="text-sm text-gray-500">Son {batchList.length} işlem</p>
               </div>
             </div>
             {isLoading ? (
               <div className="p-8 text-center text-gray-500">Geçmiş yükleniyor...</div>
-            ) : batches?.data?.length === 0 ? (
+            ) : batchList.length === 0 ? (
               <div className="p-8 text-center text-gray-500">Henüz yüklenmiş dosya yok.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -221,28 +227,40 @@ export default function AdminImportsPage() {
                     <tr>
                       <th className="px-6 py-3 text-left">Dosya</th>
                       <th className="px-6 py-3 text-left">Durum</th>
+                      <th className="px-6 py-3 text-left">Ders</th>
+                      <th className="px-6 py-3 text-left">Satır</th>
                       <th className="px-6 py-3 text-left">Tarih</th>
                       <th className="px-6 py-3 text-left">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {batches?.data?.map((batch: any) => (
+                    {batchList.map((batch: any) => (
                       <tr key={batch.id} className="hover:bg-gray-50 transition">
                         <td className="px-6 py-4">
-                          <p className="font-medium">{batch.filename}</p>
-                          <p className="text-xs text-gray-500">{batch.total_students} öğrenci</p>
+                          <p className="font-medium">{batch.original_filename}</p>
+                          <p className="text-xs text-gray-500">
+                            Mod: {batch.import_mode || 'Belirtilmedi'}
+                          </p>
                         </td>
                         <td className="px-6 py-4">
                           <span
                             className={`px-2 py-1 text-xs rounded-full ${
-                              batch.status === 'completed'
+                              batch.status === 'committed'
                                 ? 'bg-emerald-50 text-emerald-600'
+                                : batch.status === 'failed'
+                                ? 'bg-rose-50 text-rose-600'
                                 : 'bg-yellow-50 text-yellow-600'
                             }`}
                           >
-                            {batch.status === 'completed' ? 'Tamamlandı' : 'İşleniyor'}
+                            {batch.status === 'committed' ? 'Tamamlandı' : batch.status === 'failed' ? 'Hatalı' : 'Bekliyor'}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {batch.course
+                            ? `${batch.course.name} (${batch.course.code})`
+                            : 'Atanmadı'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{batch.rows_count}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {new Date(batch.created_at).toLocaleString('tr-TR')}
                         </td>
