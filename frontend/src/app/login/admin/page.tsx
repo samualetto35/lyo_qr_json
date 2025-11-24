@@ -112,7 +112,11 @@ export default function AdminLoginPage() {
   )
 
   return (
-    <LoginL1 title="Yönetici Girişi" subtitle="Lütfen yönetici kimlik bilgileriniz ile giriş yapın">
+    <LoginL1
+      title="Yönetici Girişi"
+      subtitle="Lütfen yönetici kimlik bilgileriniz ile giriş yapın"
+      illustrationSrc="/a_modern_glassmorphism-style_login_background_for_a_school_system_administrator_feature_soft_floati_b5mwd4isxzw30ta7e1t2_1.png"
+    >
       <div className="mt-8">{formContent}</div>
     </LoginL1>
   )

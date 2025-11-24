@@ -112,7 +112,11 @@ export default function TeacherLoginPage() {
   )
 
   return (
-    <LoginL1 title="Öğretmen Girişi" subtitle="Lütfen öğretmen kimlik bilgileriniz ile giriş yapın">
+    <LoginL1
+      title="Öğretmen Girişi"
+      subtitle="Lütfen öğretmen kimlik bilgileriniz ile giriş yapın"
+      illustrationSrc="/a_refined_glassmorphism-style_login_background_for_a_teacher_soft_translucent_rounded_panels_float__on6z3n1iuz1jlyp4tz4t_1.png"
+    >
       <div className="mt-8">{formContent}</div>
     </LoginL1>
   )

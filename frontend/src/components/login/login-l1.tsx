@@ -6,14 +6,22 @@ interface LoginL1Props {
   title: string
   subtitle: string
   children: ReactNode
+  illustrationSrc?: string
 }
 
-export function LoginL1({ title, subtitle, children }: LoginL1Props) {
+export function LoginL1({
+  title,
+  subtitle,
+  children,
+  illustrationSrc,
+}: LoginL1Props) {
   const [showInfo, setShowInfo] = useState(false)
+  const imageSrc =
+    illustrationSrc ?? '/images/login-default.png'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-6">
+      <div className="w-full max-w-5xl space-y-6">
         <div className="flex items-center justify-between text-[13px] text-gray-600">
           <span className="font-medium tracking-tight">
             Sabancı Lise Yaz Okulu Yoklama Sistemi
@@ -47,12 +55,26 @@ export function LoginL1({ title, subtitle, children }: LoginL1Props) {
           </div>
         )}
 
-        <div className="text-center space-y-2">
-          <h2 className="text-3xl font-extrabold text-gray-900">{title}</h2>
-          <p className="text-sm text-gray-600">{subtitle}</p>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="hidden md:flex">
+            <div className="w-full h-[520px] rounded-3xl overflow-hidden shadow-xl border border-white/40 bg-white/30 backdrop-blur">
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${imageSrc})`,
+                }}
+              ></div>
+            </div>
+          </div>
 
-        {children}
+          <div className="bg-white/80 rounded-3xl p-8 shadow-lg border border-gray-100 space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-extrabold text-gray-900">{title}</h2>
+              <p className="text-sm text-gray-600">{subtitle}</p>
+            </div>
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   )

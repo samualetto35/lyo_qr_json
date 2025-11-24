@@ -112,7 +112,11 @@ export default function DoctorLoginPage() {
   )
 
   return (
-    <LoginL1 title="Doktor Girişi" subtitle="Lütfen doktor kimlik bilgileriniz ile giriş yapın">
+    <LoginL1
+      title="Doktor Girişi"
+      subtitle="Lütfen doktor kimlik bilgileriniz ile giriş yapın"
+      illustrationSrc="/a_serene_clinical_glassmorphism_login_background_for_a_school_doctor_or_medical_staff_member_floati_a326wszm5lyey27kr99j_3.png"
+    >
       <div className="mt-8">{formContent}</div>
     </LoginL1>
   )
