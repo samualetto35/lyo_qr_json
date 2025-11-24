@@ -31,20 +31,20 @@ export default function AdminHealthSystemPage() {
   }, [router])
 
   const { data: students, isLoading } = useQuery({
-  const { data: doctors } = useQuery({
-    queryKey: ['admin-doctors-health'],
-    queryFn: async () => {
-      const response = await api.get('/admin/doctors')
-      return response.data
-    },
-    enabled: !!user,
-  })
-
     queryKey: ['health-system-students', search],
     queryFn: async () => {
       const response = await api.get('/admin/health-system/students', {
         params: { search },
       })
+      return response.data
+    },
+    enabled: !!user,
+  })
+
+  const { data: doctors } = useQuery({
+    queryKey: ['admin-doctors-health'],
+    queryFn: async () => {
+      const response = await api.get('/admin/doctors')
       return response.data
     },
     enabled: !!user,
