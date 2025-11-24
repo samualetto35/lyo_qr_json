@@ -388,17 +388,11 @@ export default function AdminImportBatchDetailPage() {
                           className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm"
                         >
                           <option value="">Ders seçin</option>
-                          {courses?.map((course: any) => {
-                            const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id)
-                            if (!isValidUUID) {
-                              console.warn(`[Import] Invalid UUID for course: ${course.name} - ID: ${course.id}`)
-                            }
-                            return (
-                              <option key={course.id} value={course.id}>
-                                {course.name} ({course.code})
-                              </option>
-                            )
-                          })}
+                          {courses?.map((course: any) => (
+                            <option key={course.id} value={course.id}>
+                              {course.name} ({course.code})
+                            </option>
+                          ))}
                         </select>
                         <Button
                           onClick={() => selectedCourse && assignCourseMutation.mutate(selectedCourse)}

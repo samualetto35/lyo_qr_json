@@ -32,8 +32,13 @@ export default function AdminHealthSystemPage() {
   const { data: students, isLoading } = useQuery({
     queryKey: ['health-system-students', search],
     queryFn: async () => {
-      const response = await api.get('/admin/health-system/students', {
-        params: { search },
+      // Use /admin/students endpoint which includes reports_count
+      const response = await api.get('/admin/students', {
+        params: { 
+          search,
+          page: 1,
+          limit: 1000, // Get all students with reports
+        },
       })
       console.log('[Health] Students API response:', response.data)
       if (response.data?.data) {

@@ -7,7 +7,7 @@ export enum ImportMode {
 }
 
 export class AssignCourseDto {
-  @IsUUID()
+  @IsString()
   course_id: string;
 }
 
