@@ -7,6 +7,8 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminSettingsPage() {
   const router = useRouter()
@@ -14,6 +16,7 @@ export default function AdminSettingsPage() {
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState<any>({})
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -77,27 +80,10 @@ export default function AdminSettingsPage() {
 
   if (!mounted || !user) return null
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/dashboard" className="text-primary-600 hover:text-primary-700">
-              ← Dashboard
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-          </div>
-          <button onClick={handleLogout} className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900">
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading ? (
-          <div className="text-center py-12">Loading...</div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+  const settingsForm = isLoading ? (
+    <div className="text-center py-12">Loading...</div>
+  ) : (
+    <form onSubmit={handleSubmit} className="space-y-6">
             {/* Session Duration */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Session Duration</h2>
@@ -259,10 +245,87 @@ export default function AdminSettingsPage() {
                 {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
-          </form>
-        )}
+      <div className="flex justify-end">
+        <Button type="submit" disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
+        </Button>
+      </div>
+    </form>
+  )
+
+  const legacyContent = (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Link href="/admin/dashboard" className="text-primary-600 hover:text-primary-700">
+              ← Dashboard
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
+          </div>
+          <button onClick={handleLogout} className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900">
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {settingsForm}
       </main>
     </div>
   )
+
+  if (theme === 'a2') {
+    const cards = [
+      {
+        title: 'Sistem Ayarları',
+        description: 'Oturum ve güvenlik limitlerini yapılandırın.',
+        href: '/admin/settings',
+        active: true,
+      },
+      {
+        title: 'Denetim Kayıtları',
+        description: 'Yetkili işlemleri ve değişiklikleri inceleyin.',
+        href: '/admin/audit-logs',
+      },
+      {
+        title: 'Fraud Signals',
+        description: 'Şüpheli yoklama girişlerini analiz edin.',
+        href: '/admin/fraud-signals',
+      },
+    ]
+
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {cards.map((card) => (
+              <Link
+                key={card.title}
+                href={card.href}
+                className={`rounded-3xl border p-6 transition ${
+                  card.active
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white border-gray-100 hover:border-gray-200 text-gray-900'
+                }`}
+              >
+                <p className="text-sm uppercase tracking-[0.2em]">
+                  {card.active ? 'Aktif' : 'Keşfet'}
+                </p>
+                <h3 className="text-xl font-semibold mt-2">{card.title}</h3>
+                <p className="text-sm mt-2 text-current/80">{card.description}</p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            {settingsForm}
+          </div>
+        </section>
+      </AdminA2Layout>
+    )
+  }
+
+  return legacyContent
 }
 

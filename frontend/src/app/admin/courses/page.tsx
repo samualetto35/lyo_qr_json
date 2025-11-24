@@ -72,9 +72,79 @@ export default function AdminCoursesPage() {
     router.push('/login/admin')
   }
 
+  const modal = showModal && (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-xl">
+        <h3 className="text-xl font-semibold mb-4">Yeni Ders Oluştur</h3>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            createCourseMutation.mutate(formData)
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ders Adı</label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Ders Kodu</label>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Öğretmen</label>
+              <select
+                required
+                value={formData.teacher_id}
+                onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Öğretmen seçin</option>
+                {teachers?.data?.map((teacher: any) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.first_name} {teacher.last_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Açıklama</label>
+            <textarea
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+              Vazgeç
+            </Button>
+            <Button type="submit" disabled={createCourseMutation.isPending}>
+              {createCourseMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+
   if (!mounted || !user) return null
 
-  return (
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -144,73 +214,98 @@ export default function AdminCoursesPage() {
         </div>
       </main>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Add New Course</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              createCourseMutation.mutate(formData)
-            }}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Course Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Course Code</label>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Assign Teacher</label>
-                  <select
-                    required
-                    value={formData.teacher_id}
-                    onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select a teacher</option>
-                    {teachers?.data?.map((teacher: any) => (
-                      <option key={teacher.id} value={teacher.id}>
-                        {teacher.first_name} {teacher.last_name} ({teacher.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-6 flex gap-2">
-                <Button type="submit" disabled={createCourseMutation.isPending}>
-                  {createCourseMutation.isPending ? 'Creating...' : 'Create Course'}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
+  )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              placeholder="Ders adı veya kodu ara"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+            />
+            <Button
+              onClick={() => setShowModal(true)}
+              className="rounded-full bg-[#0C2A5E] hover:bg-[#123679]"
+            >
+              Yeni Ders
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Dersler</h2>
+              <p className="text-sm text-gray-500">Toplam {courses?.length || 0} kayıt</p>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">Dersler yükleniyor...</div>
+            ) : courses?.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Ders bulunamadı.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">Ders</th>
+                      <th className="px-6 py-3 text-left">Kod</th>
+                      <th className="px-6 py-3 text-left">Öğretmen</th>
+                      <th className="px-6 py-3 text-left">Öğrenci</th>
+                      <th className="px-6 py-3 text-left">Durum</th>
+                      <th className="px-6 py-3 text-left">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-700">
+                    {courses?.map((course: any) => (
+                      <tr key={course.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">
+                          <p className="font-medium">{course.name}</p>
+                          <p className="text-xs text-gray-500">{course.description || '—'}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{course.code || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{course.teacher?.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{course.students_count}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              course.is_active
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-gray-100 text-gray-500'
+                            }`}
+                          >
+                            {course.is_active ? 'Aktif' : 'Pasif'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/admin/courses/${course.id}/students`}
+                            className="text-primary-600 hover:underline text-sm"
+                          >
+                            Öğrencileri Gör
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+        {modal}
+      </AdminA2Layout>
+    )
+  }
+
+  return (
+    <>
+      {legacyContent}
+      {modal}
+    </>
   )
 }
 

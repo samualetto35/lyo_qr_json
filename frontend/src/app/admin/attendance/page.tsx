@@ -7,11 +7,14 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import Link from 'next/link'
 import { formatDate, formatDateTime } from '@/lib/utils'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminAttendancePage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const { theme } = useAdminTheme()
   
   // Filters
   const [fromDate, setFromDate] = useState('')
@@ -95,7 +98,7 @@ export default function AdminAttendancePage() {
 
   if (!mounted || !user) return null
 
-  return (
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -320,4 +323,166 @@ export default function AdminAttendancePage() {
       </main>
     </div>
   )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-col gap-2 mb-6">
+              <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Yoklama Yönetimi</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Yoklama Oturumları</h1>
+              <p className="text-sm text-gray-500">
+                Öğretmen, ders ve tarih filtreleri ile yoklama geçmişini inceleyin.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-gray-400 mb-1">Başlangıç</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-gray-400 mb-1">Bitiş</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label className="block text-xs uppercase tracking-wide text-gray-400 mb-1">Ders</label>
+                <select
+                  value={courseFilter}
+                  onChange={(e) => setCourseFilter(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+                >
+                  <option value="">Tüm Dersler</option>
+                  {courses?.map((course: any) => (
+                    <option key={course.id} value={course.id}>
+                      {course.code} - {course.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-gray-400 mb-1">Öğretmen</label>
+                <select
+                  value={teacherFilter}
+                  onChange={(e) => setTeacherFilter(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+                >
+                  <option value="">Tüm Öğretmenler</option>
+                  {teachers?.map((teacher: any) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-gray-400 mb-1">Durum</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+                >
+                  <option value="">Tümü</option>
+                  <option value="open">Açık</option>
+                  <option value="closed">Kapalı</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3 justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Son Yoklamalar</h2>
+                <p className="text-xs text-gray-500">Toplam {sessions?.length || 0} kayıt</p>
+              </div>
+              <div className="flex gap-2 text-xs">
+                <button
+                  className="px-3 py-1 rounded-full border border-gray-200"
+                  onClick={() => handleSort('session_date')}
+                >
+                  Tarihe Göre {sortBy === 'session_date' ? getSortIcon('session_date') : ''}
+                </button>
+                <button
+                  className="px-3 py-1 rounded-full border border-gray-200"
+                  onClick={() => handleSort('close_time')}
+                >
+                  Kapanışa Göre {sortBy === 'close_time' ? getSortIcon('close_time') : ''}
+                </button>
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">Yoklamalar yükleniyor...</div>
+            ) : sessions?.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Yoklama kaydı bulunamadı.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">Ders</th>
+                      <th className="px-6 py-3 text-left">Öğretmen</th>
+                      <th className="px-6 py-3 text-left">Tarih</th>
+                      <th className="px-6 py-3 text-left">Durum</th>
+                      <th className="px-6 py-3 text-left">Katılım</th>
+                      <th className="px-6 py-3 text-left">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-700">
+                    {sessions?.map((session: any) => (
+                      <tr key={session.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">
+                          <p className="font-medium">{session.course_name}</p>
+                          <p className="text-xs text-gray-500">{session.course_code}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{session.teacher_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {formatDateTime(session.session_date)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              session.status === 'open'
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {session.status === 'open' ? 'Açık' : 'Kapalı'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {session.present_count}/{session.total_students}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/admin/session-details/${session.id}`}
+                            className="text-primary-600 hover:underline text-sm"
+                          >
+                            Detayları Gör
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      </AdminA2Layout>
+    )
+  }
+
+  return legacyContent
 }

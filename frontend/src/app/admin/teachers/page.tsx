@@ -7,6 +7,8 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminTeachersPage() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export default function AdminTeachersPage() {
     last_name: '',
     password: '',
   })
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -63,9 +66,74 @@ export default function AdminTeachersPage() {
     router.push('/login/admin')
   }
 
+  const modal = showModal && (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-xl">
+        <h3 className="text-xl font-semibold mb-4">Öğretmen Ekle</h3>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            createTeacherMutation.mutate(formData)
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700">E-posta</label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ad</label>
+            <input
+              type="text"
+              required
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Soyad</label>
+            <input
+              type="text"
+              required
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Şifre</label>
+            <input
+              type="password"
+              minLength={8}
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+              Vazgeç
+            </Button>
+            <Button type="submit" disabled={createTeacherMutation.isPending}>
+              {createTeacherMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+
   if (!mounted || !user) return null
 
-  return (
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow">
@@ -158,77 +226,90 @@ export default function AdminTeachersPage() {
         </div>
       </main>
 
-      {/* Add Teacher Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Add New Teacher</h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                createTeacherMutation.mutate(formData)
-              }}
-            >
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">First Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-              <div className="mt-6 flex gap-2">
-                <Button type="submit" disabled={createTeacherMutation.isPending}>
-                  {createTeacherMutation.isPending ? 'Creating...' : 'Create Teacher'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
+  )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              placeholder="Öğretmen e-posta veya isim ara"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+            />
+            <Button
+              onClick={() => setShowModal(true)}
+              className="rounded-full bg-[#0C2A5E] hover:bg-[#123679]"
+            >
+              Öğretmen Ekle
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Öğretmenler</h2>
+              <p className="text-sm text-gray-500">Toplam {teachers?.data?.length || 0} kayıt</p>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">Öğretmenler yükleniyor...</div>
+            ) : teachers?.data?.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Öğretmen bulunamadı.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">E-posta</th>
+                      <th className="px-6 py-3 text-left">İsim</th>
+                      <th className="px-6 py-3 text-left">Durum</th>
+                      <th className="px-6 py-3 text-left">Ders Sayısı</th>
+                      <th className="px-6 py-3 text-left">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-700">
+                    {teachers?.data?.map((teacher: any) => (
+                      <tr key={teacher.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">{teacher.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {teacher.first_name} {teacher.last_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              teacher.is_active
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-red-50 text-red-600'
+                            }`}
+                          >
+                            {teacher.is_active ? 'Aktif' : 'Pasif'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">{teacher.courses_count}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button className="text-primary-600 hover:underline text-sm">Düzenle</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+        {modal}
+      </AdminA2Layout>
+    )
+  }
+
+  return (
+    <>
+      {legacyContent}
+      {modal}
+    </>
   )
 }
 

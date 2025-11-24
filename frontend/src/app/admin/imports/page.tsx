@@ -7,6 +7,8 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminImportsPage() {
   const router = useRouter()
@@ -15,6 +17,7 @@ export default function AdminImportsPage() {
   const [mounted, setMounted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -33,14 +36,6 @@ export default function AdminImportsPage() {
       return response.data
     },
     enabled: !!user,
-  })
-
-  const { data: courses } = useQuery({
-    queryKey: ['courses-for-import'],
-    queryFn: async () => {
-      const response = await api.get('/admin/courses')
-      return response.data
-    },
   })
 
   const uploadMutation = useMutation({
@@ -71,9 +66,14 @@ export default function AdminImportsPage() {
     uploadMutation.mutate(formData)
   }
 
+  const handleLogout = () => {
+    authService.logout()
+    router.push('/login/admin')
+  }
+
   if (!mounted || !user) return null
 
-  return (
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -119,7 +119,7 @@ export default function AdminImportsPage() {
           </div>
           {isLoading ? (
             <div className="p-8 text-center">Loading...</div>
-          ) : (
+        ) : (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -168,5 +168,104 @@ export default function AdminImportsPage() {
       </main>
     </div>
   )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-col gap-2 mb-6">
+              <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Öğrenci Ekle</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Toplu Öğrenci Yükleme</h1>
+              <p className="text-sm text-gray-500">CSV veya Excel dosyasıyla öğrencileri sisteme ekleyin.</p>
+            </div>
+            <div className="space-y-4">
+              <label className="flex flex-col gap-2">
+                <span className="text-xs uppercase tracking-wide text-gray-400">Dosya Seçin</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gray-900 file:text-white hover:file:bg-gray-700"
+                />
+              </label>
+              <p className="text-xs text-gray-500">
+                Beklenen kolonlar: student_id, first_name, last_name, gender (opsiyonel), program (opsiyonel)
+              </p>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || uploadMutation.isPending}
+                className="rounded-full bg-[#0C2A5E] hover:bg-[#123679]"
+              >
+                {uploadMutation.isPending ? 'Yükleniyor...' : 'Dosyayı Yükle'}
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Yükleme Geçmişi</h2>
+                <p className="text-sm text-gray-500">Son {batches?.data?.length || 0} işlem</p>
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">Geçmiş yükleniyor...</div>
+            ) : batches?.data?.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Henüz yüklenmiş dosya yok.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">Dosya</th>
+                      <th className="px-6 py-3 text-left">Durum</th>
+                      <th className="px-6 py-3 text-left">Tarih</th>
+                      <th className="px-6 py-3 text-left">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-700">
+                    {batches?.data?.map((batch: any) => (
+                      <tr key={batch.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4">
+                          <p className="font-medium">{batch.filename}</p>
+                          <p className="text-xs text-gray-500">{batch.total_students} öğrenci</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              batch.status === 'completed'
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-yellow-50 text-yellow-600'
+                            }`}
+                          >
+                            {batch.status === 'completed' ? 'Tamamlandı' : 'İşleniyor'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {new Date(batch.created_at).toLocaleString('tr-TR')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/admin/imports/${batch.id}`}
+                            className="text-primary-600 hover:underline text-sm"
+                          >
+                            Detayları Gör
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      </AdminA2Layout>
+    )
+  }
+
+  return legacyContent
 }
 

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminStudentsPage() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export default function AdminStudentsPage() {
   const [sortOrder, setSortOrder] = useState('asc')
   const [page, setPage] = useState(1)
   const limit = 20
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -83,7 +86,12 @@ export default function AdminStudentsPage() {
 
   if (!mounted || !user) return null
 
-  return (
+  const handleLogout = () => {
+    authService.logout()
+    router.push('/login/admin')
+  }
+
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow">
@@ -369,5 +377,179 @@ export default function AdminStudentsPage() {
       </main>
     </div>
   )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <div className="flex flex-col gap-2 mb-6">
+              <p className="text-sm uppercase tracking-[0.2em] text-gray-400">Öğrenci Yönetimi</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Tüm Öğrenciler</h1>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Input
+                placeholder="Öğrenci ID veya isim ara"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Select value={courseFilter} onValueChange={setCourseFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tüm Dersler" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Tüm Dersler</SelectItem>
+                  {courses?.data?.map((course: any) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name} ({course.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={absenceFilter} onValueChange={setAbsenceFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Devamsızlık" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  <SelectItem value="2">2 Yoklama</SelectItem>
+                  <SelectItem value="3+">3+ Yoklama</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sırala" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student_id">Öğrenci ID</SelectItem>
+                    <SelectItem value="name">İsim</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                >
+                  {sortOrder === 'asc' ? '↑ Artan' : '↓ Azalan'}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Öğrenciler ({students?.total || 0})
+                </h2>
+                {absenceFilter !== 'all' && (
+                  <p className="text-xs text-gray-500">
+                    {absenceFilter === '2'
+                      ? 'Herhangi bir derste tam 2 yoklama'
+                      : 'Herhangi bir derste 3 ve üzeri yoklama'}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded bg-yellow-50 border border-yellow-200" />
+                  2 yoklama
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded bg-red-50 border border-red-200" />
+                  3+ yoklama
+                </div>
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center text-gray-500">Öğrenciler yükleniyor...</div>
+            ) : students?.data.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">Öğrenci bulunamadı.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">Öğrenci ID</th>
+                      <th className="px-6 py-3 text-left">İsim</th>
+                      <th className="px-6 py-3 text-left">Program</th>
+                      <th className="px-6 py-3 text-left">Dersler</th>
+                      <th className="px-6 py-3 text-left">Durum</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-gray-700">
+                    {students?.data.map((student: any) => (
+                      <tr key={student.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">
+                          {student.student_id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {student.first_name} {student.last_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {student.program || '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            {student.courses.map((course: any) => (
+                              <div
+                                key={course.course_id}
+                                className="px-3 py-1 rounded-full bg-gray-100 text-xs text-gray-700"
+                              >
+                                {course.course_name}{' '}
+                                <span className="text-gray-400">
+                                  ({course.attendance_percentage}%)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {student.courses.some(
+                            (course: any) => course.medical_report_count > 0
+                          ) ? (
+                            <span className="px-2 py-1 text-xs rounded-full bg-purple-50 text-purple-600">
+                              Raporlu
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs rounded-full bg-emerald-50 text-emerald-600">
+                              Aktif
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                Sayfa {page} / {Math.ceil((students?.total || 1) / limit)}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                  Önceki
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={students && students.total <= page * limit}
+                >
+                  Sonraki
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </AdminA2Layout>
+    )
+  }
+
+  return legacyContent
 }
 

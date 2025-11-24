@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/lib/auth'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -60,7 +63,7 @@ export default function AdminDashboardPage() {
     router.push('/login/admin')
   }
 
-  return (
+  const legacyContent = (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow">
@@ -186,5 +189,57 @@ export default function AdminDashboardPage() {
       </main>
     </div>
   )
+
+  if (theme === 'a2') {
+    return (
+      <AdminA2Layout user={user} onLogout={handleLogout}>
+        <section className="space-y-6">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-400">
+              A2 Dashboard
+            </p>
+            <h1 className="text-3xl font-semibold text-gray-900 mt-2">
+              Yeni Yönetim Deneyimi Çok Yakında
+            </h1>
+            <p className="text-gray-600 mt-3 max-w-2xl">
+              Dashboard bileşenleri a2 tasarımında yeniden düzenleniyor. Öğrenci ve yoklama verilerine erişmek için üst menüyü
+              kullanmaya devam edebilirsiniz.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                title: 'Öğrenciler',
+                description: 'Tüm öğrencileri yönet ve filtrele',
+                href: '/admin/students',
+              },
+              {
+                title: 'Yoklamalar',
+                description: 'Oturumları izle ve yönet',
+                href: '/admin/attendance',
+              },
+              {
+                title: 'Öğretmenler',
+                description: 'Erişimleri düzenle ve izle',
+                href: '/admin/teachers',
+              },
+            ].map((card) => (
+              <Link
+                key={card.title}
+                href={card.href}
+                className="bg-white rounded-3xl p-6 border border-gray-100 hover:border-gray-200 transition"
+              >
+                <p className="text-sm uppercase tracking-[0.15em] text-gray-400">{card.title}</p>
+                <p className="text-gray-900 font-semibold mt-2">{card.description}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </AdminA2Layout>
+    )
+  }
+
+  return legacyContent
 }
 
