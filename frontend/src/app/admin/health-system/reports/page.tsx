@@ -56,10 +56,41 @@ export default function AdminHealthReportsPage() {
     router.push('/login/admin')
   }
 
+  const renderLoadingState = () => {
+    if (theme === 'a2') {
+      return (
+        <div className="p-8">
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-gray-200 border-t-emerald-500 animate-spin" />
+              <span className="absolute inset-0 flex items-center justify-center text-2xl">🩺</span>
+            </div>
+            <p className="text-sm text-gray-500 text-center max-w-sm animate-pulse">
+              Sağlık raporları yükleniyor. Doktor ve öğrenci verileri hazırlanıyor...
+            </p>
+            <div className="w-full max-w-2xl space-y-3">
+              {[1, 2, 3].map((key) => (
+                <div
+                  key={key}
+                  className="p-4 rounded-2xl border border-gray-100 bg-gray-50 animate-pulse"
+                >
+                  <div className="h-3 bg-gray-200 rounded w-1/3 mb-3" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return <div className="p-8 text-center">Loading...</div>
+  }
+
   const reportsTable = (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       {isLoading ? (
-        <div className="p-8 text-center">{theme === 'a2' ? 'Raporlar yükleniyor...' : 'Loading...'}</div>
+        renderLoadingState()
       ) : reports?.length === 0 ? (
         <div className="p-8 text-center text-gray-500">
           {theme === 'a2' ? 'Rapor bulunamadı.' : 'No reports found.'}

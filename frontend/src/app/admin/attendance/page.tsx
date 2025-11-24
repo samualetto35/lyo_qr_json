@@ -96,6 +96,21 @@ export default function AdminAttendancePage() {
     return sortOrder === 'asc' ? '↑' : '↓'
   }
 
+  const resolveCourseName = (session: any) => session.course?.name ?? session.course_name ?? '-'
+  const resolveCourseCode = (session: any) => session.course?.code ?? session.course_code ?? '-'
+  const resolveTeacherName = (session: any) =>
+    session.teacher_name ?? session.teacher?.name ?? session.teacher?.full_name ?? '-'
+  const resolveIsOpen = (session: any) =>
+    typeof session.is_open === 'boolean' ? session.is_open : session.status === 'open'
+  const resolveAttendanceRate = (session: any) => session.attendance_rate ?? session.attendanceRate ?? 0
+  const resolveAttendanceCount = (session: any) =>
+    session.attendance_count ?? session.present_count ?? session.attendanceCount ?? 0
+  const resolveEnrolledCount = (session: any) =>
+    session.enrolled_count ?? session.total_students ?? session.enrolledCount ?? 0
+  const resolveSessionId = (session: any) => session.id ?? session.session_id ?? ''
+  const resolveSessionName = (session: any) => session.session_name ?? session.sessionName ?? 'İsimsiz Oturum'
+  const resolveCloseTime = (session: any) => session.end_time ?? session.close_time ?? session.closeTime ?? null
+
   if (!mounted || !user) return null
 
   const legacyContent = (
@@ -402,23 +417,29 @@ export default function AdminAttendancePage() {
           </div>
 
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center gap-3 justify-between">
+            <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Son Yoklamalar</h2>
-                <p className="text-xs text-gray-500">Toplam {sessions?.length || 0} kayıt</p>
+                <h2 className="text-lg font-semibold text-gray-900">Yoklama Oturumları</h2>
+                <p className="text-xs text-gray-500">
+                  {sessions?.length || 0} kayıt listeleniyor
+                </p>
               </div>
-              <div className="flex gap-2 text-xs">
-                <button
-                  className="px-3 py-1 rounded-full border border-gray-200"
-                  onClick={() => handleSort('session_date')}
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <span className="text-gray-500">Sırala:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-1 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-200"
                 >
-                  Tarihe Göre {sortBy === 'session_date' ? getSortIcon('session_date') : ''}
-                </button>
+                  <option value="session_date">Oturum Tarihi</option>
+                  <option value="close_time">Kapanış Saati</option>
+                  <option value="updated">Son Güncelleme</option>
+                </select>
                 <button
-                  className="px-3 py-1 rounded-full border border-gray-200"
-                  onClick={() => handleSort('close_time')}
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-50 transition"
                 >
-                  Kapanışa Göre {sortBy === 'close_time' ? getSortIcon('close_time') : ''}
+                  {sortOrder === 'asc' ? '↑ Artan' : '↓ Azalan'}
                 </button>
               </div>
             </div>
@@ -431,49 +452,105 @@ export default function AdminAttendancePage() {
                 <table className="min-w-full divide-y divide-gray-100 text-sm">
                   <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
                     <tr>
+                      <th className="px-6 py-3 text-left">Oturum</th>
                       <th className="px-6 py-3 text-left">Ders</th>
                       <th className="px-6 py-3 text-left">Öğretmen</th>
                       <th className="px-6 py-3 text-left">Tarih</th>
                       <th className="px-6 py-3 text-left">Durum</th>
-                      <th className="px-6 py-3 text-left">Katılım</th>
+                      <th className="px-6 py-3 text-left">Kapanış Saati</th>
+                      <th
+                        className="px-6 py-3 text-left cursor-pointer select-none"
+                        onClick={() => handleSort('attendance_rate')}
+                      >
+                        Katılım Oranı {getSortIcon('attendance_rate')}
+                      </th>
+                      <th className="px-6 py-3 text-left">Eksik Öğrenci</th>
                       <th className="px-6 py-3 text-left">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
-                    {sessions?.map((session: any) => (
-                      <tr key={session.id} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4">
-                          <p className="font-medium">{session.course_name}</p>
-                          <p className="text-xs text-gray-500">{session.course_code}</p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{session.teacher_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {formatDateTime(session.session_date)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              session.status === 'open'
-                                ? 'bg-emerald-50 text-emerald-600'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {session.status === 'open' ? 'Açık' : 'Kapalı'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {session.present_count}/{session.total_students}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            href={`/admin/session-details/${session.id}`}
-                            className="text-primary-600 hover:underline text-sm"
-                          >
-                            Detayları Gör
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {sessions?.map((session: any) => {
+                      const attendanceRate = resolveAttendanceRate(session)
+                      const attendanceCount = resolveAttendanceCount(session)
+                      const enrolledCount = resolveEnrolledCount(session)
+                      const missingCount = Math.max(enrolledCount - attendanceCount, 0)
+                      const isOpen = resolveIsOpen(session)
+                      const sessionId = resolveSessionId(session)
+                      const closeTime = resolveCloseTime(session)
+
+                      return (
+                        <tr key={sessionId || session.id} className="hover:bg-gray-50 transition">
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-gray-900">
+                              {resolveSessionName(session)}
+                            </div>
+                            {sessionId && (
+                              <div className="text-xs text-gray-500 font-mono truncate max-w-[180px]">
+                                {sessionId}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="font-medium">{resolveCourseName(session)}</p>
+                            <p className="text-xs text-gray-500">{resolveCourseCode(session)}</p>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {resolveTeacherName(session)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                            {session.session_date ? formatDate(session.session_date) : '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                isOpen ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {isOpen ? 'Açık' : 'Kapalı'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                            {closeTime ? formatDateTime(closeTime) : '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    attendanceRate >= 80
+                                      ? 'bg-green-500'
+                                      : attendanceRate >= 50
+                                      ? 'bg-yellow-500'
+                                      : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${Math.min(attendanceRate, 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-right">
+                                {attendanceRate}%
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {attendanceCount}/{enrolledCount} öğrenci
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-red-100 text-red-800">
+                              <span className="font-bold text-lg">{missingCount}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">Eksik</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link
+                              href={`/admin/session-details/${sessionId}`}
+                              className="text-primary-600 hover:underline text-sm"
+                            >
+                              Detayları Gör
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
