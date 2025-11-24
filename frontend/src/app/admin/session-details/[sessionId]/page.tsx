@@ -193,7 +193,7 @@ export default function AdminSessionDetailsPage() {
             </div>
 
             {/* Hourly Distribution Bar Chart */}
-            <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm">
+            <div>
               <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-3">Katılım Saatlik Dağılımı</p>
               {hourlyDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>

@@ -282,7 +282,7 @@ export default function StudentDetailPage() {
 
       {/* Monthly Trend Chart */}
       {monthlyTrend.length > 0 && (
-        <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm">
+        <div>
           <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-3">Aylık Katılım Trendi</p>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={monthlyTrend}>

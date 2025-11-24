@@ -8,7 +8,6 @@ import api from '@/lib/api'
 import Link from 'next/link'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
@@ -380,56 +379,68 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Hourly Distribution - Interactive Chart */}
+            {/* Today's Performance KPI */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Saatlik Dağılım</p>
-              {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart 
-                    data={stats.hourlyDistribution.filter((h: any) => h.count > 0)}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="hour" 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
-                      tickFormatter={(value) => `${String(value).padStart(2, '0')}:00`}
-                      label={{ value: 'Saat', position: 'insideBottom', offset: -5, style: { fontSize: 11, fill: '#9ca3af' } }}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
-                      label={{ value: 'Oturum Sayısı', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#9ca3af' } }}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [`${value} oturum`, '']}
-                      labelFormatter={(label) => `${String(label).padStart(2, '0')}:00`}
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
-                    />
-                    <Bar 
-                      dataKey="count" 
-                      radius={[6, 6, 0, 0]}
-                    >
-                      {stats.hourlyDistribution
-                        .filter((h: any) => h.count > 0)
-                        .map((entry: any, index: number) => {
-                          const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
-                          const intensity = entry.count / maxCount
-                          const color = `rgba(59, 130, 246, ${0.5 + intensity * 0.5})`
-                          return <Cell key={`cell-${index}`} fill={color} />
-                        })}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[240px] flex items-center justify-center">
-                  <p className="text-sm text-gray-400">Bugün henüz oturum yok</p>
+              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Performans</p>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 border border-blue-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-blue-600 font-medium">Bugünkü Toplam Katılım</p>
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {stats.hourlyDistribution.reduce((sum: number, h: any) => sum + h.attendance, 0)}
+                  </p>
+                  <p className="text-xs text-blue-500 mt-1">{stats.todaySessions} oturumda</p>
                 </div>
-              )}
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-emerald-600 font-medium">Ortalama Oturum Başına</p>
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-900">
+                    {stats.todaySessions > 0 
+                      ? Math.round(stats.hourlyDistribution.reduce((sum: number, h: any) => sum + h.attendance, 0) / stats.todaySessions)
+                      : 0}
+                  </p>
+                  <p className="text-xs text-emerald-500 mt-1">öğrenci/oturum</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-purple-600 font-medium">En Aktif Saat</p>
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
+                    <>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {(() => {
+                          const maxHour = stats.hourlyDistribution.reduce((max: any, h: any) => 
+                            h.count > max.count ? h : max, stats.hourlyDistribution[0])
+                          return `${String(maxHour.hour).padStart(2, '0')}:00`
+                        })()}
+                      </p>
+                      <p className="text-xs text-purple-500 mt-1">
+                        {(() => {
+                          const maxHour = stats.hourlyDistribution.reduce((max: any, h: any) => 
+                            h.count > max.count ? h : max, stats.hourlyDistribution[0])
+                          return `${maxHour.count} oturum`
+                        })()}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-purple-900">-</p>
+                      <p className="text-xs text-purple-500 mt-1">Henüz veri yok</p>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -450,37 +461,35 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            <div className="grid grid-cols-2 md:grid-cols-1 gap-4 md:gap-0">
-              <Link
-                href="/admin/teachers"
-                className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-5 border border-violet-100 hover:shadow-md transition"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-violet-200 rounded-xl flex items-center justify-center">
-                    <span className="text-xl">👨‍🏫</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-violet-600 mb-1">Toplam Öğretmen</p>
-                    <p className="text-2xl font-bold text-violet-900">{stats.totalTeachers}</p>
-                  </div>
+            <Link
+              href="/admin/teachers"
+              className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-5 border border-violet-100 hover:shadow-md transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-violet-200 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">👨‍🏫</span>
                 </div>
-              </Link>
+                <div>
+                  <p className="text-xs text-violet-600 mb-1">Toplam Öğretmen</p>
+                  <p className="text-2xl font-bold text-violet-900">{stats.totalTeachers}</p>
+                </div>
+              </div>
+            </Link>
 
-              <Link
-                href="/admin/courses"
-                className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-5 border border-teal-100 hover:shadow-md transition"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-teal-200 rounded-xl flex items-center justify-center">
-                    <span className="text-xl">📚</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-teal-600 mb-1">Toplam Ders</p>
-                    <p className="text-2xl font-bold text-teal-900">{stats.totalCourses}</p>
-                  </div>
+            <Link
+              href="/admin/courses"
+              className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-5 border border-teal-100 hover:shadow-md transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-teal-200 rounded-xl flex items-center justify-center">
+                  <span className="text-xl">📚</span>
                 </div>
-              </Link>
-            </div>
+                <div>
+                  <p className="text-xs text-teal-600 mb-1">Toplam Ders</p>
+                  <p className="text-2xl font-bold text-teal-900">{stats.totalCourses}</p>
+                </div>
+              </div>
+            </Link>
           </div>
 
           {/* Quick Actions */}
