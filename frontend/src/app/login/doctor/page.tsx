@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button'
 import { LoginL1 } from '@/components/login/login-l1'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Geçerli bir e-posta adresi girin'),
+  password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -37,7 +37,7 @@ export default function DoctorLoginPage() {
       await authService.loginDoctor(data.email, data.password)
       window.location.href = '/doctor/dashboard'
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password')
+      setError(err.response?.data?.message || 'E-posta veya şifre hatalı')
     } finally {
       setIsLoading(false)
     }
@@ -51,18 +51,18 @@ export default function DoctorLoginPage() {
         </div>
       )}
 
-      <div className="rounded-md shadow-sm -space-y-px">
+      <div className="space-y-4">
         <div>
           <label htmlFor="email" className="sr-only">
-            Email address
+            E-posta adresi
           </label>
           <input
             {...register('email')}
             id="email"
             type="email"
             autoComplete="email"
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-            placeholder="Email address"
+            className="appearance-none block w-full rounded-lg px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+            placeholder="E-posta adresi"
             style={{ fontSize: '16px' }}
           />
           {errors.email && (
@@ -71,15 +71,15 @@ export default function DoctorLoginPage() {
         </div>
         <div>
           <label htmlFor="password" className="sr-only">
-            Password
+            Şifre
           </label>
           <input
             {...register('password')}
             id="password"
             type="password"
             autoComplete="current-password"
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-            placeholder="Password"
+            className="appearance-none block w-full rounded-lg px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+            placeholder="Şifre"
             style={{ fontSize: '16px' }}
           />
           {errors.password && (
@@ -90,7 +90,7 @@ export default function DoctorLoginPage() {
 
       <div>
         <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? 'Signing in...' : 'Sign in as Doctor'}
+          {isLoading ? 'Giriş yapılıyor...' : 'Doktor olarak giriş yap'}
         </Button>
       </div>
 
@@ -99,20 +99,20 @@ export default function DoctorLoginPage() {
           href="/login/admin"
           className="text-sm text-primary-600 hover:text-primary-500 block"
         >
-          Login as Admin instead
+          Bunun yerine Yönetici girişi yap
         </Link>
         <Link
           href="/login/teacher"
           className="text-sm text-primary-600 hover:text-primary-500 block"
         >
-          Login as Teacher instead
+          Bunun yerine Öğretmen girişi yap
         </Link>
       </div>
     </form>
   )
 
   return (
-    <LoginL1 title="Doctor Login" subtitle="Medical Report Portal">
+    <LoginL1 title="Doktor Girişi" subtitle="Lütfen doktor kimlik bilgileriniz ile giriş yapın">
       <div className="mt-8">{formContent}</div>
     </LoginL1>
   )
