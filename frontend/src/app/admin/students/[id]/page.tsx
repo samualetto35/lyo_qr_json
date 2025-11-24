@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Link from 'next/link'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 
 export default function StudentDetailPage() {
   const router = useRouter()
@@ -75,12 +75,22 @@ export default function StudentDetailPage() {
     
     return student.courses
       .filter((course: any) => courseFilter === 'all' || course.course_id === courseFilter)
-      .map((course: any) => ({
-        name: course.course_code,
-        katılım: course.attendance_rate || 0,
-        katılan: course.present_count || 0,
-        katılmayan: course.absent_count || 0,
-      }))
+      .map((course: any) => {
+        // Calculate attendance rate if not provided
+        const totalSessions = course.total_sessions || 0
+        const presentCount = course.present_count || 0
+        const attendanceRate = totalSessions > 0 
+          ? Math.round((presentCount / totalSessions) * 100) 
+          : (course.attendance_rate || 0)
+        
+        return {
+          name: course.course_code,
+          katılım: attendanceRate,
+          katılan: presentCount,
+          toplam: totalSessions,
+        }
+      })
+      .filter((course: any) => course.toplam > 0) // Only show courses with sessions
   }, [student, courseFilter])
 
   // Prepare monthly attendance trend
@@ -267,7 +277,16 @@ export default function StudentDetailPage() {
                   label={{ value: 'Katılım %', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Katılım Oranı']}
+                  formatter={(value: number, payload: any) => {
+                    const data = payload?.[0]?.payload
+                    if (data) {
+                      return [
+                        `${value}% (${data.katılan}/${data.toplam})`,
+                        'Katılım Oranı'
+                      ]
+                    }
+                    return [`${value}%`, 'Katılım Oranı']
+                  }}
                 />
                 <Bar dataKey="katılım" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -280,29 +299,6 @@ export default function StudentDetailPage() {
         </div>
       </div>
 
-      {/* Monthly Trend Chart */}
-      {monthlyTrend.length > 0 && (
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-3">Aylık Katılım Trendi</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={monthlyTrend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fontSize: 10 }}
-              />
-              <YAxis 
-                tick={{ fontSize: 10 }}
-              />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="Katılan" stroke="#10b981" strokeWidth={2} />
-              <Line type="monotone" dataKey="Katılmayan" stroke="#ef4444" strokeWidth={2} />
-              <Line type="monotone" dataKey="Tıbbi Rapor" stroke="#a855f7" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
 
       {/* Medical Reports - Compact */}
       <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm">

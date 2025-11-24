@@ -53,21 +53,27 @@ export default function AdminSessionDetailsPage() {
     router.push('/login/admin')
   }
 
-  // Calculate hourly distribution from present students
-  const hourlyDistribution = useMemo(() => {
+  // Calculate submission method distribution
+  const submissionMethodData = useMemo(() => {
     if (!sessionDetails?.present_students) return []
     
-    const hours = Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 }))
+    const methods = {
+      qr: 0,
+      manual: 0,
+    }
     
     sessionDetails.present_students.forEach((student: any) => {
-      if (student.submitted_at) {
-        const date = new Date(student.submitted_at)
-        const hour = date.getHours()
-        hours[hour].count++
+      if (student.submitted_via === 'manual') {
+        methods.manual++
+      } else {
+        methods.qr++
       }
     })
     
-    return hours.filter(h => h.count > 0)
+    return [
+      { name: 'QR Kod', value: methods.qr, color: '#3b82f6' },
+      { name: 'Manuel', value: methods.manual, color: '#10b981' },
+    ].filter(d => d.value > 0)
   }, [sessionDetails])
 
   // Prepare chart data
@@ -192,28 +198,29 @@ export default function AdminSessionDetailsPage() {
               )}
             </div>
 
-            {/* Hourly Distribution Bar Chart */}
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-3">Katılım Saatlik Dağılımı</p>
-              {hourlyDistribution.length > 0 ? (
+            {/* Submission Method Distribution */}
+            <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 mb-3">Katılım Yöntemi Dağılımı</p>
+              {submissionMethodData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={hourlyDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="hour" 
-                      tick={{ fontSize: 10 }}
-                      label={{ value: 'Saat', position: 'insideBottom', offset: -5, style: { fontSize: 10 } }}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 10 }}
-                      label={{ value: 'Öğrenci Sayısı', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [`${value} öğrenci`, 'Katılım']}
-                      labelFormatter={(label) => `${label}:00`}
-                    />
-                    <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
+                  <PieChart>
+                    <Pie
+                      data={submissionMethodData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent, value }) => `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`}
+                      outerRadius={60}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {submissionMethodData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-[180px] flex items-center justify-center text-gray-400 text-sm">
