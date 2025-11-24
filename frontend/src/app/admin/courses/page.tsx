@@ -7,6 +7,8 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useAdminTheme } from '@/contexts/admin-theme.context'
+import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
 
 export default function AdminCoursesPage() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export default function AdminCoursesPage() {
     description: '',
     teacher_id: '',
   })
+  const { theme } = useAdminTheme()
 
   useEffect(() => {
     setMounted(true)
