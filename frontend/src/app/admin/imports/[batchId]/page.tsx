@@ -60,25 +60,61 @@ export default function AdminImportBatchDetailPage() {
 
   const assignCourseMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      return await api.post(`/admin/import/students/batches/${batchId}/assign-course`, {
-        course_id: courseId,
-      })
+      if (!courseId) {
+        throw new Error('Course ID is required')
+      }
+      console.log('[Import] Assigning course:', { batchId, courseId })
+      try {
+        const response = await api.post(`/admin/import/students/batches/${batchId}/assign-course`, {
+          course_id: courseId,
+        })
+        return response
+      } catch (error: any) {
+        console.error('[Import] Assign course error:', error)
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            'Failed to assign course'
+        throw new Error(errorMessage)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-batch', batchId] })
       alert('Course assigned successfully!')
     },
+    onError: (error: any) => {
+      console.error('[Import] Assign course mutation error:', error)
+      alert(error.message || 'Failed to assign course. Please check the console for details.')
+    },
   })
 
   const setModeMutation = useMutation({
     mutationFn: async (mode: string) => {
-      return await api.post(`/admin/import/students/batches/${batchId}/set-mode`, {
-        import_mode: mode,
-      })
+      if (!mode) {
+        throw new Error('Import mode is required')
+      }
+      console.log('[Import] Setting mode:', { batchId, mode })
+      try {
+        const response = await api.post(`/admin/import/students/batches/${batchId}/set-mode`, {
+          import_mode: mode,
+        })
+        return response
+      } catch (error: any) {
+        console.error('[Import] Set mode error:', error)
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            'Failed to set import mode'
+        throw new Error(errorMessage)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['import-batch', batchId] })
       alert('Import mode set successfully!')
+    },
+    onError: (error: any) => {
+      console.error('[Import] Set mode mutation error:', error)
+      alert(error.message || 'Failed to set import mode. Please check the console for details.')
     },
   })
 

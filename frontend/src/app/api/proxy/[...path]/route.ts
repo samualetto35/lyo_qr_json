@@ -31,10 +31,18 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
     const base = targetBase.replace(/\/$/, '')
     const targetUrl = `${base}/${path}${search}`
 
+    console.log(`[Proxy] ${request.method} ${path} -> ${targetUrl}`)
+
     const headers = new Headers(request.headers)
     hopByHopHeaders.forEach((header) => headers.delete(header))
     headers.delete('content-length')
     headers.delete('host')
+
+    // Ensure Content-Type is preserved for JSON requests
+    const contentType = request.headers.get('content-type')
+    if (contentType && !headers.has('content-type')) {
+      headers.set('content-type', contentType)
+    }
 
     const fetchInit: RequestInit = {
       method: request.method,
@@ -46,6 +54,7 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
       const body = await request.text()
       if (body) {
         fetchInit.body = body
+        console.log(`[Proxy] Request body:`, body.substring(0, 200))
       }
     }
 
@@ -59,14 +68,24 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
     responseHeaders.set('access-control-allow-headers', 'Content-Type, Authorization')
 
     const responseBody = await response.text()
+    
+    // Log error responses for debugging
+    if (!response.ok) {
+      console.error(`[Proxy] Error ${response.status} from ${targetUrl}:`, responseBody.substring(0, 500))
+    }
+
     return new NextResponse(responseBody, {
       status: response.status,
       headers: responseHeaders,
     })
   } catch (error: any) {
-    console.error('Proxy error:', error)
+    console.error('[Proxy] Exception:', error.message, error.stack)
     return new NextResponse(
-      JSON.stringify({ message: 'Proxy error', error: error.message }),
+      JSON.stringify({ 
+        message: 'Proxy error', 
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
