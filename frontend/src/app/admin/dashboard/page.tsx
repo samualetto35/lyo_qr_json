@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
   const { data: teachersData } = useQuery({
     queryKey: ['dashboard-teachers'],
     queryFn: async () => {
-      const response = await api.get('/admin/teachers', { params: { page: 1, limit: 1 } })
+      const response = await api.get('/admin/teachers', { params: { page: 1, pageSize: 1 } })
       return response.data
     },
     enabled: !!user && theme === 'a2',
@@ -98,9 +98,16 @@ export default function AdminDashboardPage() {
 
   // Calculate comprehensive stats
   const stats = useMemo(() => {
-    const allSessions = attendanceData || []
+    const allSessions = Array.isArray(attendanceData) ? attendanceData : []
     const closedSessions = allSessions.filter((s: any) => !s.isOpen)
     const openSessions = allSessions.filter((s: any) => s.isOpen)
+
+    // Today's sessions
+    const todayDateStr = new Date().toISOString().split('T')[0]
+    const todaySessions = allSessions.filter((s: any) => {
+      const sessionDate = new Date(s.sessionDate || s.session_date).toISOString().split('T')[0]
+      return sessionDate === todayDateStr
+    })
 
     // Weekly trend (last 7 days)
     const today = new Date()
@@ -157,23 +164,35 @@ export default function AdminDashboardPage() {
     const fraudSignals = fraudData?.data || []
     const recentFraud = fraudSignals.slice(0, 5)
 
+    // Today's attendance distribution by hour
+    const hourlyDistribution = Array.from({ length: 24 }, (_, hour) => {
+      const hourSessions = todaySessions.filter((s: any) => {
+        const sessionTime = new Date(s.sessionDate || s.session_date || s.createdAt)
+        return sessionTime.getHours() === hour
+      })
+      return {
+        hour,
+        count: hourSessions.length,
+        attendance: hourSessions.reduce((sum: number, s: any) => sum + (s.attendance_count || 0), 0),
+      }
+    })
+
     return {
       totalStudents: studentsData?.total || 0,
-      totalTeachers: teachersData?.total || 0,
-      totalCourses: coursesData?.total || 0,
+      totalTeachers: teachersData?.meta?.total || 0,
+      totalCourses: Array.isArray(coursesData) ? coursesData.length : 0,
       totalSessions: allSessions.length,
       openSessions: openSessions.length,
       closedSessions: closedSessions.length,
+      todaySessions: todaySessions.length,
       overallAttendanceRate,
       totalAttendance,
       totalExpected,
       weeklyTrend,
-      monthlyGrowth: lastMonthSessions.length > 0 
-        ? Math.round(((thisMonthSessions.length - lastMonthSessions.length) / lastMonthSessions.length) * 100)
-        : 0,
+      hourlyDistribution,
       courseActivity,
       recentFraud,
-      fraudCount: fraudData?.total || 0,
+      fraudCount: fraudData?.total || (Array.isArray(fraudData?.data) ? fraudData.data.length : 0),
     }
   }, [studentsData, teachersData, coursesData, attendanceData, fraudData])
 
@@ -240,8 +259,8 @@ export default function AdminDashboardPage() {
       <AdminA2Layout user={user} onLogout={handleLogout}>
         <section className="space-y-6">
           {/* Welcome Header */}
-          <div className="bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 rounded-3xl p-8 border border-rose-100">
-            <p className="text-sm uppercase tracking-[0.2em] text-rose-400 mb-2">Genel Bakış</p>
+          <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl p-8 border border-gray-200">
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Genel Bakış</p>
             <h1 className="text-3xl font-semibold text-gray-800">
               Hoş Geldiniz, {user?.first_name || 'Admin'}
             </h1>
@@ -251,33 +270,33 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-2 md:gap-4">
             {/* Active Sessions */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-blue-200 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-3 md:p-6 border border-blue-100">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-200 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                <span className="text-[10px] md:text-xs font-medium text-blue-600 bg-blue-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">
                   Canlı
                 </span>
               </div>
-              <p className="text-xs text-blue-600 mb-1">Açık Oturumlar</p>
-              <p className="text-2xl font-bold text-blue-900">{stats.openSessions}</p>
-              <p className="text-xs text-blue-500 mt-1">Toplam: {stats.totalSessions}</p>
+              <p className="text-[10px] md:text-xs text-blue-600 mb-1">Açık</p>
+              <p className="text-xl md:text-2xl font-bold text-blue-900">{stats.openSessions}</p>
+              <p className="text-[10px] md:text-xs text-blue-500 mt-1">Toplam: {stats.totalSessions}</p>
             </div>
 
             {/* Attendance Rate */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-emerald-200 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-3 md:p-6 border border-emerald-100">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-emerald-200 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                <span className={`text-[10px] md:text-xs font-medium px-1.5 md:px-2 py-0.5 md:py-1 rounded-full ${
                   stats.overallAttendanceRate >= 80 ? 'text-emerald-600 bg-emerald-100' :
                   stats.overallAttendanceRate >= 60 ? 'text-amber-600 bg-amber-100' :
                   'text-rose-600 bg-rose-100'
@@ -285,46 +304,44 @@ export default function AdminDashboardPage() {
                   {stats.overallAttendanceRate >= 80 ? 'İyi' : stats.overallAttendanceRate >= 60 ? 'Orta' : 'Düşük'}
                 </span>
               </div>
-              <p className="text-xs text-emerald-600 mb-1">Katılım Oranı</p>
-              <p className="text-2xl font-bold text-emerald-900">{stats.overallAttendanceRate}%</p>
-              <p className="text-xs text-emerald-500 mt-1">{stats.totalAttendance}/{stats.totalExpected} öğrenci</p>
+              <p className="text-[10px] md:text-xs text-emerald-600 mb-1">Katılım</p>
+              <p className="text-xl md:text-2xl font-bold text-emerald-900">{stats.overallAttendanceRate}%</p>
+              <p className="text-[10px] md:text-xs text-emerald-500 mt-1">{stats.totalAttendance}/{stats.totalExpected}</p>
             </div>
 
-            {/* Monthly Growth */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-purple-200 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            {/* Today's Sessions */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-3 md:p-6 border border-purple-100">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-purple-200 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  stats.monthlyGrowth > 0 ? 'text-purple-600 bg-purple-100' : 'text-gray-600 bg-gray-100'
-                }`}>
-                  {stats.monthlyGrowth > 0 ? '↑' : '↓'} {Math.abs(stats.monthlyGrowth)}%
+                <span className="text-[10px] md:text-xs font-medium text-purple-600 bg-purple-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">
+                  Bugün
                 </span>
               </div>
-              <p className="text-xs text-purple-600 mb-1">Aylık Büyüme</p>
-              <p className="text-2xl font-bold text-purple-900">{stats.monthlyGrowth > 0 ? '+' : ''}{stats.monthlyGrowth}%</p>
-              <p className="text-xs text-purple-500 mt-1">Oturum sayısı</p>
+              <p className="text-[10px] md:text-xs text-purple-600 mb-1">Oturumlar</p>
+              <p className="text-xl md:text-2xl font-bold text-purple-900">{stats.todaySessions}</p>
+              <p className="text-[10px] md:text-xs text-purple-500 mt-1">Bu gün</p>
             </div>
 
             {/* Fraud Signals */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-100">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-amber-200 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-3 md:p-6 border border-amber-100">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-200 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
-                <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                <span className="text-[10px] md:text-xs font-medium text-amber-600 bg-amber-100 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">
                   Uyarı
                 </span>
               </div>
-              <p className="text-xs text-amber-600 mb-1">Şüpheli Sinyaller</p>
-              <p className="text-2xl font-bold text-amber-900">{stats.fraudCount}</p>
-              <Link href="/admin/fraud-signals" className="text-xs text-amber-500 mt-1 hover:underline block">
-                Detayları gör →
+              <p className="text-[10px] md:text-xs text-amber-600 mb-1">Şüpheli</p>
+              <p className="text-xl md:text-2xl font-bold text-amber-900">{stats.fraudCount}</p>
+              <Link href="/admin/fraud-signals" className="text-[10px] md:text-xs text-amber-500 mt-1 hover:underline block">
+                Detay →
               </Link>
             </div>
           </div>
@@ -358,36 +375,37 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Top Courses */}
+            {/* Hourly Distribution */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">En Aktif Dersler</p>
-              <div className="space-y-3">
-                {stats.courseActivity.length > 0 ? (
-                  stats.courseActivity.map((course: any, idx: number) => {
-                    const maxSessions = Math.max(...stats.courseActivity.map((c: any) => c.sessionCount), 1)
-                    const percentage = (course.sessionCount / maxSessions) * 100
-                    return (
-                      <div key={idx} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{course.name}</p>
-                          <p className="text-xs text-gray-500">{course.code}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-gray-100 rounded-full h-2">
+              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Saatlik Dağılım</p>
+              <div className="space-y-2">
+                {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
+                  stats.hourlyDistribution
+                    .filter((h: any) => h.count > 0)
+                    .map((hour: any, idx: number) => {
+                      const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
+                      const percentage = (hour.count / maxCount) * 100
+                      return (
+                        <div key={idx}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-gray-600">
+                              {String(hour.hour).padStart(2, '0')}:00
+                            </span>
+                            <span className="text-xs font-medium text-gray-700">
+                              {hour.count} oturum
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2">
                             <div
-                              className="bg-gradient-to-r from-blue-300 to-cyan-400 h-2 rounded-full"
+                              className="bg-gradient-to-r from-indigo-300 to-purple-400 h-2 rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
-                          <span className="text-xs font-medium text-gray-700 w-12 text-right">
-                            {course.sessionCount}
-                          </span>
                         </div>
-                      </div>
-                    )
-                  })
+                      )
+                    })
                 ) : (
-                  <p className="text-sm text-gray-400 text-center py-8">Henüz veri yok</p>
+                  <p className="text-sm text-gray-400 text-center py-8">Bugün henüz oturum yok</p>
                 )}
               </div>
             </div>
