@@ -87,10 +87,10 @@ export default function AdminDashboardPage() {
     queryKey: ['dashboard-fraud'],
     queryFn: async () => {
       try {
-        const response = await api.get('/admin/fraud-signals', { params: { page: 1, limit: 10 } })
+        const response = await api.get('/admin/fraud-signals')
         return response.data
       } catch {
-        return { data: [], total: 0 }
+        return []
       }
     },
     enabled: !!user && theme === 'a2',
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
       hourlyDistribution,
       courseActivity,
       recentFraud,
-      fraudCount: fraudData?.total || (Array.isArray(fraudData?.data) ? fraudData.data.length : 0),
+      fraudCount: Array.isArray(fraudData) ? fraudData.length : 0,
     }
   }, [studentsData, teachersData, coursesData, attendanceData, fraudData])
 
@@ -259,18 +259,18 @@ export default function AdminDashboardPage() {
       <AdminA2Layout user={user} onLogout={handleLogout}>
         <section className="space-y-6">
           {/* Welcome Header */}
-          <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl p-8 border border-gray-200">
-            <p className="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Genel Bakış</p>
-            <h1 className="text-3xl font-semibold text-gray-800">
+          <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl p-4 md:p-8 border border-gray-200">
+            <p className="text-[10px] md:text-sm uppercase tracking-[0.2em] text-gray-400 mb-1 md:mb-2">Genel Bakış</p>
+            <h1 className="text-lg md:text-3xl font-semibold text-gray-800">
               Hoş Geldiniz, {user?.first_name || 'Admin'}
             </h1>
-            <p className="text-gray-600 mt-2 text-sm">
+            <p className="text-gray-600 mt-1 md:mt-2 text-[11px] md:text-sm">
               Sistem performansını ve önemli metrikleri buradan takip edebilirsiniz.
             </p>
           </div>
 
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-4 gap-2 md:gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-4">
             {/* Active Sessions */}
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-3 md:p-6 border border-blue-100">
               <div className="flex items-center justify-between mb-2 md:mb-3">
@@ -327,7 +327,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Fraud Signals */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-3 md:p-6 border border-amber-100">
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-3 md:p-6 border border-amber-100 col-span-3 md:col-span-1">
               <div className="flex items-center justify-between mb-2 md:mb-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 bg-amber-200 rounded-xl flex items-center justify-center">
                   <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -338,19 +338,23 @@ export default function AdminDashboardPage() {
                   Uyarı
                 </span>
               </div>
-              <p className="text-[10px] md:text-xs text-amber-600 mb-1">Şüpheli</p>
-              <p className="text-xl md:text-2xl font-bold text-amber-900">{stats.fraudCount}</p>
-              <Link href="/admin/fraud-signals" className="text-[10px] md:text-xs text-amber-500 mt-1 hover:underline block">
-                Detay →
-              </Link>
+              <div className="flex items-center justify-between md:block">
+                <div className="md:mb-1">
+                  <p className="text-[10px] md:text-xs text-amber-600 mb-1">Şüpheli Sinyaller</p>
+                  <p className="text-xl md:text-2xl font-bold text-amber-900">{stats.fraudCount}</p>
+                </div>
+                <Link href="/admin/fraud-signals" className="text-[10px] md:text-xs text-amber-500 hover:underline md:block md:mt-1">
+                  Detay →
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Weekly Trend Chart */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Haftalık Trend</p>
+            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-6 border border-sky-100 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.15em] text-sky-400 mb-4">Haftalık Trend</p>
               <div className="space-y-3">
                 {stats.weeklyTrend.map((day: any, idx: number) => {
                   const maxCount = Math.max(...stats.weeklyTrend.map((d: any) => d.count), 1)
@@ -360,12 +364,12 @@ export default function AdminDashboardPage() {
                   return (
                     <div key={idx}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-gray-600">{dayName}</span>
-                        <span className="text-xs font-medium text-gray-700">{day.count} oturum</span>
+                        <span className="text-xs text-sky-600">{dayName}</span>
+                        <span className="text-xs font-medium text-sky-700">{day.count} oturum</span>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div className="w-full bg-sky-100 rounded-full h-2">
                         <div
-                          className="bg-gradient-to-r from-rose-300 to-pink-400 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-sky-400 to-blue-500 h-2 rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -376,8 +380,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Hourly Distribution */}
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Saatlik Dağılım</p>
+            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-6 border border-sky-100 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.15em] text-sky-400 mb-4">Bugünkü Saatlik Dağılım</p>
               <div className="space-y-2">
                 {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
                   stats.hourlyDistribution
@@ -388,16 +392,16 @@ export default function AdminDashboardPage() {
                       return (
                         <div key={idx}>
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-600">
+                            <span className="text-xs text-sky-600">
                               {String(hour.hour).padStart(2, '0')}:00
                             </span>
-                            <span className="text-xs font-medium text-gray-700">
+                            <span className="text-xs font-medium text-sky-700">
                               {hour.count} oturum
                             </span>
                           </div>
-                          <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div className="w-full bg-sky-100 rounded-full h-2">
                             <div
-                              className="bg-gradient-to-r from-indigo-300 to-purple-400 h-2 rounded-full transition-all"
+                              className="bg-gradient-to-r from-sky-400 to-blue-500 h-2 rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -405,7 +409,7 @@ export default function AdminDashboardPage() {
                       )
                     })
                 ) : (
-                  <p className="text-sm text-gray-400 text-center py-8">Bugün henüz oturum yok</p>
+                  <p className="text-sm text-sky-400 text-center py-8">Bugün henüz oturum yok</p>
                 )}
               </div>
             </div>
