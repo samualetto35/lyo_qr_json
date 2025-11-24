@@ -50,6 +50,114 @@ export default function AdminDashboardPage() {
     return () => clearTimeout(timeout)
   }, [router])
 
+  // Fetch dashboard data - MUST be called before any conditional returns
+  const { data: studentsData } = useQuery({
+    queryKey: ['dashboard-students'],
+    queryFn: async () => {
+      const response = await api.get('/admin/students', { params: { page: 1, limit: 1 } })
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  const { data: teachersData } = useQuery({
+    queryKey: ['dashboard-teachers'],
+    queryFn: async () => {
+      const response = await api.get('/admin/teachers', { params: { page: 1, limit: 1 } })
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  const { data: coursesData } = useQuery({
+    queryKey: ['dashboard-courses'],
+    queryFn: async () => {
+      const response = await api.get('/admin/courses', { params: { page: 1, limit: 100 } })
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  const { data: attendanceData } = useQuery({
+    queryKey: ['dashboard-attendance'],
+    queryFn: async () => {
+      const response = await api.get('/admin/attendance/sessions', { params: { page: 1, limit: 100 } })
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  const { data: doctorsData } = useQuery({
+    queryKey: ['dashboard-doctors'],
+    queryFn: async () => {
+      const response = await api.get('/admin/doctors')
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  const { data: reportsData } = useQuery({
+    queryKey: ['dashboard-reports'],
+    queryFn: async () => {
+      const response = await api.get('/admin/health-system/reports')
+      return response.data
+    },
+    enabled: !!user && theme === 'a2',
+  })
+
+  // Calculate stats - MUST be called before any conditional returns
+  const stats = useMemo(() => {
+    const totalStudents = studentsData?.total || 0
+    const totalTeachers = teachersData?.total || 0
+    const totalCourses = coursesData?.total || 0
+    const totalSessions = attendanceData?.total || 0
+    const totalDoctors = doctorsData?.data?.length || 0
+    const totalReports = Array.isArray(reportsData) ? reportsData.length : 0
+
+    // Calculate attendance rate from sessions
+    const closedSessions = attendanceData?.data?.filter((s: any) => s.status === 'closed') || []
+    const totalAttendanceRecords = closedSessions.reduce((sum: number, session: any) => {
+      return sum + (session.attendance_count || 0)
+    }, 0)
+    const totalExpected = closedSessions.reduce((sum: number, session: any) => {
+      return sum + (session.expected_count || 0)
+    }, 0)
+    const overallAttendanceRate = totalExpected > 0 
+      ? Math.round((totalAttendanceRecords / totalExpected) * 100) 
+      : 0
+
+    // Get recent sessions
+    const recentSessions = (attendanceData?.data || [])
+      .slice(0, 5)
+      .map((s: any) => ({
+        id: s.id,
+        course: s.course?.name || 'Bilinmeyen',
+        date: s.session_date,
+        status: s.status,
+        attendance: s.attendance_count || 0,
+        expected: s.expected_count || 0,
+      }))
+
+    // Course distribution
+    const courseDistribution = (coursesData?.data || []).slice(0, 5).map((c: any) => ({
+      name: c.name,
+      code: c.code,
+      students: c.enrollments_count || 0,
+    }))
+
+    return {
+      totalStudents,
+      totalTeachers,
+      totalCourses,
+      totalSessions,
+      totalDoctors,
+      totalReports,
+      overallAttendanceRate,
+      recentSessions,
+      courseDistribution,
+    }
+  }, [studentsData, teachersData, coursesData, attendanceData, doctorsData, reportsData])
+
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -191,114 +299,6 @@ export default function AdminDashboardPage() {
       </main>
     </div>
   )
-
-  // Fetch dashboard data
-  const { data: studentsData } = useQuery({
-    queryKey: ['dashboard-students'],
-    queryFn: async () => {
-      const response = await api.get('/admin/students', { params: { page: 1, limit: 1 } })
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  const { data: teachersData } = useQuery({
-    queryKey: ['dashboard-teachers'],
-    queryFn: async () => {
-      const response = await api.get('/admin/teachers', { params: { page: 1, limit: 1 } })
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  const { data: coursesData } = useQuery({
-    queryKey: ['dashboard-courses'],
-    queryFn: async () => {
-      const response = await api.get('/admin/courses', { params: { page: 1, limit: 100 } })
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  const { data: attendanceData } = useQuery({
-    queryKey: ['dashboard-attendance'],
-    queryFn: async () => {
-      const response = await api.get('/admin/attendance/sessions', { params: { page: 1, limit: 100 } })
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  const { data: doctorsData } = useQuery({
-    queryKey: ['dashboard-doctors'],
-    queryFn: async () => {
-      const response = await api.get('/admin/doctors')
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  const { data: reportsData } = useQuery({
-    queryKey: ['dashboard-reports'],
-    queryFn: async () => {
-      const response = await api.get('/admin/health-system/reports')
-      return response.data
-    },
-    enabled: !!user && theme === 'a2',
-  })
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    const totalStudents = studentsData?.total || 0
-    const totalTeachers = teachersData?.total || 0
-    const totalCourses = coursesData?.total || 0
-    const totalSessions = attendanceData?.total || 0
-    const totalDoctors = doctorsData?.data?.length || 0
-    const totalReports = Array.isArray(reportsData) ? reportsData.length : 0
-
-    // Calculate attendance rate from sessions
-    const closedSessions = attendanceData?.data?.filter((s: any) => s.status === 'closed') || []
-    const totalAttendanceRecords = closedSessions.reduce((sum: number, session: any) => {
-      return sum + (session.attendance_count || 0)
-    }, 0)
-    const totalExpected = closedSessions.reduce((sum: number, session: any) => {
-      return sum + (session.expected_count || 0)
-    }, 0)
-    const overallAttendanceRate = totalExpected > 0 
-      ? Math.round((totalAttendanceRecords / totalExpected) * 100) 
-      : 0
-
-    // Get recent sessions
-    const recentSessions = (attendanceData?.data || [])
-      .slice(0, 5)
-      .map((s: any) => ({
-        id: s.id,
-        course: s.course?.name || 'Bilinmeyen',
-        date: s.session_date,
-        status: s.status,
-        attendance: s.attendance_count || 0,
-        expected: s.expected_count || 0,
-      }))
-
-    // Course distribution
-    const courseDistribution = (coursesData?.data || []).slice(0, 5).map((c: any) => ({
-      name: c.name,
-      code: c.code,
-      students: c.enrollments_count || 0,
-    }))
-
-    return {
-      totalStudents,
-      totalTeachers,
-      totalCourses,
-      totalSessions,
-      totalDoctors,
-      totalReports,
-      overallAttendanceRate,
-      recentSessions,
-      courseDistribution,
-    }
-  }, [studentsData, teachersData, coursesData, attendanceData, doctorsData, reportsData])
 
   if (theme === 'a2') {
     return (
