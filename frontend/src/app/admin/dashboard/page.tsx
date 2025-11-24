@@ -353,8 +353,8 @@ export default function AdminDashboardPage() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Weekly Trend Chart */}
-            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-6 border border-sky-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-sky-400 mb-4">Haftalık Trend</p>
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Haftalık Trend</p>
               <div className="space-y-3">
                 {stats.weeklyTrend.map((day: any, idx: number) => {
                   const maxCount = Math.max(...stats.weeklyTrend.map((d: any) => d.count), 1)
@@ -364,12 +364,12 @@ export default function AdminDashboardPage() {
                   return (
                     <div key={idx}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-sky-600">{dayName}</span>
-                        <span className="text-xs font-medium text-sky-700">{day.count} oturum</span>
+                        <span className="text-xs text-gray-600">{dayName}</span>
+                        <span className="text-xs font-medium text-gray-700">{day.count} oturum</span>
                       </div>
-                      <div className="w-full bg-sky-100 rounded-full h-2">
+                      <div className="w-full bg-gray-100 rounded-full h-2">
                         <div
-                          className="bg-gradient-to-r from-sky-400 to-blue-500 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -380,38 +380,62 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Hourly Distribution */}
-            <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl p-6 border border-sky-100 shadow-sm">
-              <p className="text-sm uppercase tracking-[0.15em] text-sky-400 mb-4">Bugünkü Saatlik Dağılım</p>
-              <div className="space-y-2">
-                {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
-                  stats.hourlyDistribution
-                    .filter((h: any) => h.count > 0)
-                    .map((hour: any, idx: number) => {
-                      const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
-                      const percentage = (hour.count / maxCount) * 100
-                      return (
-                        <div key={idx}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-sky-600">
-                              {String(hour.hour).padStart(2, '0')}:00
-                            </span>
-                            <span className="text-xs font-medium text-sky-700">
-                              {hour.count} oturum
-                            </span>
-                          </div>
-                          <div className="w-full bg-sky-100 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-sky-400 to-blue-500 h-2 rounded-full transition-all"
-                              style={{ width: `${percentage}%` }}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.15em] text-gray-400 mb-4">Bugünkü Saatlik Dağılım</p>
+              {stats.hourlyDistribution.filter((h: any) => h.count > 0).length > 0 ? (
+                <div className="relative">
+                  <svg className="w-full h-48" viewBox="0 0 400 200" preserveAspectRatio="none">
+                    {stats.hourlyDistribution
+                      .filter((h: any) => h.count > 0)
+                      .map((hour: any, idx: number, arr: any[]) => {
+                        const maxCount = Math.max(...stats.hourlyDistribution.map((h: any) => h.count), 1)
+                        const barHeight = (hour.count / maxCount) * 180
+                        const barWidth = 380 / arr.length
+                        const x = (idx * barWidth) + 10
+                        const y = 190 - barHeight
+                        return (
+                          <g key={idx}>
+                            <rect
+                              x={x}
+                              y={y}
+                              width={barWidth - 4}
+                              height={barHeight}
+                              fill="url(#blueGradient)"
+                              rx="4"
+                              className="hover:opacity-80 transition-opacity cursor-pointer"
                             />
-                          </div>
-                        </div>
-                      )
-                    })
-                ) : (
-                  <p className="text-sm text-sky-400 text-center py-8">Bugün henüz oturum yok</p>
-                )}
-              </div>
+                            <text
+                              x={x + (barWidth - 4) / 2}
+                              y={195}
+                              textAnchor="middle"
+                              className="text-[8px] fill-gray-600"
+                              fontSize="10"
+                            >
+                              {String(hour.hour).padStart(2, '0')}
+                            </text>
+                            <text
+                              x={x + (barWidth - 4) / 2}
+                              y={y - 5}
+                              textAnchor="middle"
+                              className="text-[8px] fill-gray-700 font-medium"
+                              fontSize="10"
+                            >
+                              {hour.count}
+                            </text>
+                          </g>
+                        )
+                      })}
+                    <defs>
+                      <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#60a5fa" />
+                        <stop offset="100%" stopColor="#3b82f6" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-8">Bugün henüz oturum yok</p>
+              )}
             </div>
           </div>
 
@@ -432,35 +456,37 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            <Link
-              href="/admin/teachers"
-              className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-5 border border-violet-100 hover:shadow-md transition"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-violet-200 rounded-xl flex items-center justify-center">
-                  <span className="text-xl">👨‍🏫</span>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-4 md:gap-0">
+              <Link
+                href="/admin/teachers"
+                className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-5 border border-violet-100 hover:shadow-md transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-violet-200 rounded-xl flex items-center justify-center">
+                    <span className="text-xl">👨‍🏫</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-violet-600 mb-1">Toplam Öğretmen</p>
+                    <p className="text-2xl font-bold text-violet-900">{stats.totalTeachers}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-violet-600 mb-1">Toplam Öğretmen</p>
-                  <p className="text-2xl font-bold text-violet-900">{stats.totalTeachers}</p>
-                </div>
-              </div>
-            </Link>
+              </Link>
 
-            <Link
-              href="/admin/courses"
-              className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-5 border border-teal-100 hover:shadow-md transition"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-teal-200 rounded-xl flex items-center justify-center">
-                  <span className="text-xl">📚</span>
+              <Link
+                href="/admin/courses"
+                className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-5 border border-teal-100 hover:shadow-md transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-teal-200 rounded-xl flex items-center justify-center">
+                    <span className="text-xl">📚</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-teal-600 mb-1">Toplam Ders</p>
+                    <p className="text-2xl font-bold text-teal-900">{stats.totalCourses}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-teal-600 mb-1">Toplam Ders</p>
-                  <p className="text-2xl font-bold text-teal-900">{stats.totalCourses}</p>
-                </div>
-              </div>
-            </Link>
+              </Link>
+            </div>
           </div>
 
           {/* Quick Actions */}

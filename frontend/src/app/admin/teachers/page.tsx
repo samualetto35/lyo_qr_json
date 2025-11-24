@@ -17,6 +17,9 @@ export default function AdminTeachersPage() {
   const [mounted, setMounted] = useState(false)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [showCoursesModal, setShowCoursesModal] = useState(false)
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false)
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null)
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -46,6 +49,18 @@ export default function AdminTeachersPage() {
     enabled: !!user,
   })
 
+  const { data: teacherCourses } = useQuery({
+    queryKey: ['teacher-courses', selectedTeacher?.id],
+    queryFn: async () => {
+      if (!selectedTeacher?.id) return []
+      const response = await api.get('/admin/courses', {
+        params: { teacher_id: selectedTeacher.id },
+      })
+      return response.data
+    },
+    enabled: !!selectedTeacher?.id && showCoursesModal,
+  })
+
   const createTeacherMutation = useMutation({
     mutationFn: async (data: any) => {
       return await api.post('/admin/teachers', data)
@@ -58,6 +73,21 @@ export default function AdminTeachersPage() {
     },
     onError: (error: any) => {
       alert(error.response?.data?.message || 'Failed to create teacher')
+    },
+  })
+
+  const deactivateTeacherMutation = useMutation({
+    mutationFn: async (teacherId: string) => {
+      return await api.patch(`/admin/teachers/${teacherId}`, { is_active: false })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teachers'] })
+      setShowDeactivateModal(false)
+      setSelectedTeacher(null)
+      alert('Öğretmen deaktif edildi.')
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || 'Öğretmen deaktif edilemedi.')
     },
   })
 
@@ -271,7 +301,8 @@ export default function AdminTeachersPage() {
                       <th className="px-6 py-3 text-left">İsim</th>
                       <th className="px-6 py-3 text-left">Durum</th>
                       <th className="px-6 py-3 text-left">Ders Sayısı</th>
-                      <th className="px-6 py-3 text-left">İşlemler</th>
+                      <th className="px-6 py-3 text-left">Dersler</th>
+                      <th className="px-6 py-3 text-left">Deaktif Et</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -294,7 +325,30 @@ export default function AdminTeachersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{teacher.courses_count}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <button className="text-primary-600 hover:underline text-sm">Düzenle</button>
+                          <button
+                            onClick={() => {
+                              setSelectedTeacher(teacher)
+                              setShowCoursesModal(true)
+                            }}
+                            className="text-blue-600 hover:underline text-sm"
+                          >
+                            Görüntüle
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {teacher.is_active ? (
+                            <button
+                              onClick={() => {
+                                setSelectedTeacher(teacher)
+                                setShowDeactivateModal(true)
+                              }}
+                              className="text-red-600 hover:underline text-sm"
+                            >
+                              Deaktif Et
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Pasif</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -305,6 +359,101 @@ export default function AdminTeachersPage() {
           </div>
         </section>
         {modal}
+        {/* Courses Modal */}
+        {showCoursesModal && selectedTeacher && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-2xl shadow-xl max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {selectedTeacher.first_name} {selectedTeacher.last_name} - Dersler
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">{selectedTeacher.email}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCoursesModal(false)
+                    setSelectedTeacher(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {teacherCourses && teacherCourses.length > 0 ? (
+                <div className="space-y-3">
+                  {teacherCourses.map((course: any) => (
+                    <div
+                      key={course.id}
+                      className="border border-gray-200 rounded-2xl p-4 hover:border-gray-300 transition"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900">{course.name}</p>
+                          <p className="text-sm text-gray-500 mt-1">{course.code}</p>
+                          {course.description && (
+                            <p className="text-sm text-gray-600 mt-2">{course.description}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              course.is_active
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-gray-50 text-gray-600'
+                            }`}
+                          >
+                            {course.is_active ? 'Aktif' : 'Pasif'}
+                          </span>
+                          <p className="text-xs text-gray-500 mt-2">{course.students_count} öğrenci</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Bu öğretmene ait ders bulunmamaktadır.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {/* Deactivate Confirmation Modal */}
+        {showDeactivateModal && selectedTeacher && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-xl">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Öğretmeni Deaktif Et</h3>
+              <p className="text-gray-600 mb-6">
+                <strong>{selectedTeacher.first_name} {selectedTeacher.last_name}</strong> öğretmenini deaktif etmek
+                istediğinizden emin misiniz? Deaktif edilen öğretmen giriş yapamayacaktır.
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeactivateModal(false)
+                    setSelectedTeacher(null)
+                  }}
+                  disabled={deactivateTeacherMutation.isPending}
+                >
+                  İptal
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => deactivateTeacherMutation.mutate(selectedTeacher.id)}
+                  disabled={deactivateTeacherMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {deactivateTeacherMutation.isPending ? 'Deaktif Ediliyor...' : 'Deaktif Et'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </AdminA2Layout>
     )
   }
