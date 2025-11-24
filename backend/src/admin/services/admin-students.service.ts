@@ -97,12 +97,19 @@ export class AdminStudentsService {
 
     // Group medical reports by student and date
     const medicalReportsByStudent = new Map<string, Set<string>>();
+    // Count total reports per student
+    const reportsCountByStudent = new Map<string, number>();
     for (const report of allMedicalReports) {
       const dateStr = report.reportDate.toISOString().split('T')[0];
       if (!medicalReportsByStudent.has(report.studentId)) {
         medicalReportsByStudent.set(report.studentId, new Set());
+        reportsCountByStudent.set(report.studentId, 0);
       }
       medicalReportsByStudent.get(report.studentId)!.add(dateStr);
+      reportsCountByStudent.set(
+        report.studentId,
+        (reportsCountByStudent.get(report.studentId) || 0) + 1,
+      );
     }
 
     // Format response with attendance stats per course
@@ -195,6 +202,7 @@ export class AdminStudentsService {
           full_name: `${student.firstName} ${student.lastName}`,
           gender: student.gender,
           program: student.program,
+          reports_count: reportsCountByStudent.get(student.id) || 0,
           courses: coursesWithStats,
           total_courses: coursesWithStats.length,
           total_sessions: totalSessions,
