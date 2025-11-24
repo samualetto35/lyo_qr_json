@@ -6,7 +6,6 @@ import { UIThemeProvider } from '@/contexts/ui-theme.context'
 import { DoctorThemeProvider } from '@/contexts/doctor-theme.context'
 import { TeacherThemeProvider } from '@/contexts/teacher-theme.context'
 import { AdminThemeProvider } from '@/contexts/admin-theme.context'
-import { AdminThemeFloatingToggle } from '@/components/ui/admin-theme-floating'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -25,7 +24,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <TeacherThemeProvider>
             <AdminThemeProvider>
               {children}
-              <AdminThemeFloatingToggle />
             </AdminThemeProvider>
           </TeacherThemeProvider>
         </DoctorThemeProvider>

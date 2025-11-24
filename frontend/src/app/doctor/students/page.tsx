@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { useDoctorTheme } from '@/contexts/doctor-theme.context'
-import { DoctorThemeSwitcher } from '@/components/ui/doctor-theme-switcher'
 import Link from 'next/link'
 
 export default function DoctorStudentsPage() {
@@ -54,9 +53,6 @@ export default function DoctorStudentsPage() {
               <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
                 {theme === 'd2' ? 'Doktor Paneli' : 'Doctor Portal'}
               </h1>
-              <div className="hidden md:block">
-                <DoctorThemeSwitcher />
-              </div>
             </div>
             <p className={`${theme === 'd2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
               {theme === 'd2' ? (
@@ -67,9 +63,6 @@ export default function DoctorStudentsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="md:hidden">
-              <DoctorThemeSwitcher />
-            </div>
             <button
               onClick={handleLogout}
               className={theme === 'd2' 

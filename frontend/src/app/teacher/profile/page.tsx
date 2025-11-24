@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { useTeacherTheme } from '@/contexts/teacher-theme.context'
-import { TeacherThemeSwitcher } from '@/components/ui/teacher-theme-switcher'
 import Link from 'next/link'
 
 export default function TeacherProfilePage() {
@@ -51,9 +50,6 @@ export default function TeacherProfilePage() {
               <h1 className={`${theme === 't2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
                 {theme === 't2' ? 'Akademisyen Portalı' : 'Teacher Dashboard'}
               </h1>
-              <div className="hidden md:block">
-                <TeacherThemeSwitcher />
-              </div>
             </div>
             <p className={`${theme === 't2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
               {theme === 't2' ? (
@@ -64,9 +60,6 @@ export default function TeacherProfilePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="md:hidden">
-              <TeacherThemeSwitcher />
-            </div>
             <button
               onClick={handleLogout}
               className={theme === 't2' 

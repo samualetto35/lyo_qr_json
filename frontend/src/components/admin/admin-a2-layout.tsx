@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { ReactNode, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { AdminThemeSwitcher } from '@/components/ui/admin-theme-switcher'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { authService } from '@/lib/auth'
 import clsx from 'clsx'
@@ -99,7 +98,6 @@ export function AdminA2Layout({ children, user, onLogout }: AdminA2LayoutProps) 
             </p>
           </div>
           <div className="flex items-center gap-3 ml-auto">
-            <AdminThemeSwitcher />
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-sm font-medium text-[#D9534F] border border-[#F3C1BE] rounded-full hover:bg-[#FFF4F3] transition whitespace-nowrap"

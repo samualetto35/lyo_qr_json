@@ -12,13 +12,11 @@ interface AdminThemeContextType {
 const AdminThemeContext = createContext<AdminThemeContextType | undefined>(undefined)
 
 export function AdminThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<AdminTheme>('a1')
+  const [theme, setThemeState] = useState<AdminTheme>('a2')
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('admin-theme') as AdminTheme
-    if (savedTheme && (savedTheme === 'a1' || savedTheme === 'a2')) {
-      setThemeState(savedTheme)
-    }
+    // Always use a2 as default, no theme switching
+    setThemeState('a2')
   }, [])
 
   const setTheme = (newTheme: AdminTheme) => {

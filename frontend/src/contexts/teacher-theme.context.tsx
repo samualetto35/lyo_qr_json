@@ -15,11 +15,8 @@ export function TeacherThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<TeacherTheme>('t1')
 
   useEffect(() => {
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('teacher-theme') as TeacherTheme
-    if (savedTheme && (savedTheme === 't1' || savedTheme === 't2')) {
-      setThemeState(savedTheme)
-    }
+    // Always use t1 as default, no theme switching
+    setThemeState('t1')
   }, [])
 
   const setTheme = (newTheme: TeacherTheme) => {

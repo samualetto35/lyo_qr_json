@@ -12,14 +12,11 @@ interface DoctorThemeContextType {
 const DoctorThemeContext = createContext<DoctorThemeContextType | undefined>(undefined)
 
 export function DoctorThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<DoctorTheme>('d1')
+  const [theme, setThemeState] = useState<DoctorTheme>('d2')
 
   useEffect(() => {
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('doctor-theme') as DoctorTheme
-    if (savedTheme && (savedTheme === 'd1' || savedTheme === 'd2')) {
-      setThemeState(savedTheme)
-    }
+    // Always use d2 as default, no theme switching
+    setThemeState('d2')
   }, [])
 
   const setTheme = (newTheme: DoctorTheme) => {

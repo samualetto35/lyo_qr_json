@@ -7,7 +7,6 @@ import { authService } from '@/lib/auth'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { useDoctorTheme } from '@/contexts/doctor-theme.context'
-import { DoctorThemeSwitcher } from '@/components/ui/doctor-theme-switcher'
 import { Calendar } from '@/components/ui/calendar'
 import Link from 'next/link'
 
@@ -76,9 +75,6 @@ export default function ReportsPage() {
               <h1 className={`${theme === 'd2' ? 'text-[24px] font-semibold text-gray-900' : 'text-2xl font-bold text-gray-900'}`}>
                 {theme === 'd2' ? 'Doktor Paneli' : 'Doctor Portal'}
               </h1>
-              <div className="hidden md:block">
-                <DoctorThemeSwitcher />
-              </div>
             </div>
             <p className={`${theme === 'd2' ? 'text-xs text-gray-400 font-normal' : 'text-sm text-gray-600'}`}>
               {theme === 'd2' ? (
@@ -89,9 +85,6 @@ export default function ReportsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="md:hidden">
-              <DoctorThemeSwitcher />
-            </div>
             <button
               onClick={handleLogout}
               className={theme === 'd2' 
