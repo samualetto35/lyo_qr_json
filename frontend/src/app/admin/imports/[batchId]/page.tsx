@@ -44,10 +44,20 @@ export default function AdminImportBatchDetailPage() {
     queryKey: ['courses-for-import'],
     queryFn: async () => {
       const response = await api.get('/admin/courses')
+      console.log('[Import] Courses API response:', response.data)
       return response.data
     },
     enabled: !!user,
   })
+
+  useEffect(() => {
+    if (courses) {
+      console.log('[Import] Available courses:', courses)
+      courses.forEach((course: any) => {
+        console.log(`[Import] Course: ${course.name} (${course.code}) - ID: ${course.id} (type: ${typeof course.id})`)
+      })
+    }
+  }, [courses])
 
   useEffect(() => {
     if (batchData?.batch?.import_mode) {
@@ -370,15 +380,25 @@ export default function AdminImportBatchDetailPage() {
                       <div className="flex flex-col sm:flex-row gap-3">
                         <select
                           value={selectedCourse || batch.course_id || ''}
-                          onChange={(e) => setSelectedCourse(e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            console.log('[Import] Course selected:', value, 'Type:', typeof value)
+                            setSelectedCourse(value)
+                          }}
                           className="flex-1 rounded-2xl border border-gray-200 px-4 py-2 text-sm"
                         >
                           <option value="">Ders seçin</option>
-                          {courses?.map((course: any) => (
-                            <option key={course.id} value={course.id}>
-                              {course.name} ({course.code})
-                            </option>
-                          ))}
+                          {courses?.map((course: any) => {
+                            const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id)
+                            if (!isValidUUID) {
+                              console.warn(`[Import] Invalid UUID for course: ${course.name} - ID: ${course.id}`)
+                            }
+                            return (
+                              <option key={course.id} value={course.id}>
+                                {course.name} ({course.code})
+                              </option>
+                            )
+                          })}
                         </select>
                         <Button
                           onClick={() => selectedCourse && assignCourseMutation.mutate(selectedCourse)}

@@ -35,6 +35,17 @@ export default function AdminHealthSystemPage() {
       const response = await api.get('/admin/health-system/students', {
         params: { search },
       })
+      console.log('[Health] Students API response:', response.data)
+      if (response.data?.data) {
+        response.data.data.forEach((student: any) => {
+          console.log(`[Health] Student ${student.student_id}:`, {
+            reports_count: student.reports_count,
+            reportsCount: student.reportsCount,
+            reports: student.reports,
+            allKeys: Object.keys(student),
+          })
+        })
+      }
       return response.data
     },
     enabled: !!user,
@@ -58,11 +69,21 @@ export default function AdminHealthSystemPage() {
     enabled: !!user,
   })
 
-  const studentsWithReports = useMemo(
-    () =>
-      students?.data?.filter((student: any) => getReportCount(student) > 0) ?? [],
-    [students]
-  )
+  const studentsWithReports = useMemo(() => {
+    if (!students?.data) return []
+    
+    console.log('[Health] Total students from API:', students.data.length)
+    console.log('[Health] Sample student:', students.data[0])
+    
+    const filtered = students.data.filter((student: any) => {
+      const count = getReportCount(student)
+      console.log(`[Health] Student ${student.student_id}: reports_count=${count}`, student)
+      return count > 0
+    })
+    
+    console.log('[Health] Students with reports:', filtered.length)
+    return filtered
+  }, [students])
 
   const filteredStudents = useMemo(() => {
     if (!search) return studentsWithReports
