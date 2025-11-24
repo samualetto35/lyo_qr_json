@@ -1,6 +1,6 @@
 # QR Attendance Platform
 
-A production-grade web platform for managing QR-based course attendance with two roles: **Admin** and **Teacher**. Students interact via a public QR attendance page without accounts.
+A production-grade web platform for managing QR-based course attendance with multiple roles: **Admin**, **Teacher**, and **Doctor**. Students interact via a public QR attendance page without accounts.
 
 ## 🚀 Tech Stack
 
