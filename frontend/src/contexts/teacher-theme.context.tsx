@@ -12,11 +12,11 @@ interface TeacherThemeContextType {
 const TeacherThemeContext = createContext<TeacherThemeContextType | undefined>(undefined)
 
 export function TeacherThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<TeacherTheme>('t1')
+  const [theme, setThemeState] = useState<TeacherTheme>('t2')
 
   useEffect(() => {
-    // Always use t1 as default, no theme switching
-    setThemeState('t1')
+    // Always use t2 as default, no theme switching
+    setThemeState('t2')
   }, [])
 
   const setTheme = (newTheme: TeacherTheme) => {
