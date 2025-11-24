@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { authService } from '@/lib/auth'
@@ -8,6 +8,9 @@ import api from '@/lib/api'
 import Link from 'next/link'
 import { useAdminTheme } from '@/contexts/admin-theme.context'
 import { AdminA2Layout } from '@/components/admin/admin-a2-layout'
+
+const getReportCount = (student: any) =>
+  student?.reports_count ?? student?.reportsCount ?? student?.reports ?? 0
 
 export default function AdminHealthSystemPage() {
   const router = useRouter()
@@ -62,19 +65,23 @@ export default function AdminHealthSystemPage() {
 
   if (!mounted || !user) return null
 
-  const studentsWithReports =
-    students?.data?.filter((student: any) => (student.reports_count || 0) > 0) ?? []
+  const studentsWithReports = useMemo(
+    () =>
+      students?.data?.filter((student: any) => getReportCount(student) > 0) ?? [],
+    [students]
+  )
 
-  const filteredStudents = search
-    ? studentsWithReports.filter((student: any) => {
-        const term = search.toLowerCase()
-        const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.toLowerCase()
-        return (
-          student.student_id?.toLowerCase().includes(term) ||
-          fullName.includes(term)
-        )
-      })
-    : studentsWithReports
+  const filteredStudents = useMemo(() => {
+    if (!search) return studentsWithReports
+    const term = search.toLowerCase()
+    return studentsWithReports.filter((student: any) => {
+      const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.toLowerCase()
+      return (
+        student.student_id?.toLowerCase().includes(term) ||
+        fullName.includes(term)
+      )
+    })
+  }, [studentsWithReports, search])
 
   const totalReports = Array.isArray(reportsSummary) ? reportsSummary.length : undefined
   const reportsDisplay =
@@ -140,8 +147,8 @@ export default function AdminHealthSystemPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredStudents.map((student: any) => (
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredStudents.map((student: any) => (
                   <tr key={student.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {student.student_id}
@@ -156,7 +163,7 @@ export default function AdminHealthSystemPage() {
                       {student.program || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.reports_count}
+                          {getReportCount(student)}
                     </td>
                   </tr>
                 ))}
@@ -245,7 +252,7 @@ export default function AdminHealthSystemPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{student.gender || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{student.program || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{student.reports_count}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{getReportCount(student)}</td>
                       </tr>
                     ))}
                   </tbody>
